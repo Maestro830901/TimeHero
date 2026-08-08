@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeHero - Arbeitszeit Erfassung & Aufträge</title>
+    <title>TimeHero - Zeiterfassung & Büro</title>
     
-    <!-- SUPABASE CLIENT BIBLIOTHEK EINBINDEN -->
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -29,12 +29,1531 @@
             color: #333;
         }
 
+        /* --- SPLASH SCREEN --- */
         #splash-screen {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             display: flex; justify-content: center; align-items: center;
             z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            color: #ffffff; text-align: center;
+        }
+
+        #splash-screen.fade-out { opacity: 0; visibility: hidden; }
+
+        .splash-content {
+            display: flex; flex-direction: column; align-items: center;
+            animation: zoomIn 0.6s ease-out; padding: 0 20px;
+        }
+
+        .splash-logo {
+            position: relative; width: 90px; height: 90px;
+            background: rgba(255, 255, 255, 0.05); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 20px; border: 2px solid rgba(230, 126, 34, 0.5);
+            box-shadow: 0 0 25px rgba(230, 126, 34, 0.3);
+        }
+
+        .splash-logo .icon { font-size: 2.8em; animation: float 2s infinite ease-in-out; }
+
+        .pulse-ring {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            border: 2px solid #e67e22; animation: pulse 2s infinite;
+        }
+
+        .splash-title {
+            font-size: 2em; font-weight: 700; margin: 0;
+            background: linear-gradient(45deg, #ffffff, #e67e22);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .splash-subtitle { font-size: 1.1em; color: #94a3b8; margin: 10px 0 25px 0; font-weight: 400; letter-spacing: 0.5px; }
+
+        .splash-loader { width: 160px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+
+        .loader-bar { width: 0%; height: 100%; background: #e67e22; border-radius: 4px; animation: loadingProgress 3s ease-in-out forwards; }
+
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
+        @keyframes loadingProgress { 0% { width: 0%; } 100% { width: 100%; } }
+
+        /* --- MODAL / DIALOG FÜR AUSWAHL & LOGIN --- */
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 9000;
+        }
+
+        .auth-card {
+            background: #fff; width: 90%; max-width: 400px; padding: 25px;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+        }
+
+        .auth-card h2 { margin-bottom: 15px; }
+        .auth-choice-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .auth-choice-btns button { padding: 14px; font-weight: bold; font-size: 1.05em; }
+
+        /* --- ALLGEMEINES MODAL FÜR KACHEL-AKTIONEN --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 8500;
+            padding: 15px; box-sizing: border-box;
+        }
+        .modal-box {
+            background: #fff; width: 100%; max-width: 550px; max-height: 90vh;
+            overflow-y: auto; padding: 20px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
+            animation: zoomIn 0.3s ease-out;
+        }
+        .modal-close {
+            position: absolute; top: 15px; right: 15px; background: #eee;
+            border: none; border-radius: 50%; width: 32px; height: 32px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- APP MAIN LAYOUT --- */
+        .container {
+            max-width: 850px; margin: 0 auto; background: var(--bg-overlay);
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .logo-header { text-align: center; margin-bottom: 15px; min-height: 20px; }
+        .logo-preview { max-width: 250px; max-height: 110px; display: block; margin: 0 auto 10px auto; object-fit: contain; }
+
+        h1, h2, h3 { color: var(--primary-color); margin-top: 0; }
+
+        .card {
+            background: var(--card-bg); padding: 15px; border-radius: 8px;
+            margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .input-row { display: flex; align-items: center; gap: 5px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+
+        input, select, textarea, button {
+            width: 100%; padding: 10px; border: 1px solid #ccc;
+            border-radius: 6px; box-sizing: border-box; font-size: 1em;
+            background-color: #fff;
+        }
+
+        textarea { resize: vertical; height: 70px; }
+
+        .row { display: flex; gap: 10px; }
+        .row .form-group { flex: 1; }
+
+        button.btn-primary { background-color: var(--accent-color); color: white; border: none; font-weight: bold; cursor: pointer; }
+        button.btn-secondary { background-color: var(--primary-color); color: white; border: none; cursor: pointer; }
+        button.btn-danger { background-color: var(--danger-color); color: white; border: none; cursor: pointer; }
+        button.btn-success { background-color: var(--success-color); color: white; border: none; cursor: pointer; font-weight: bold; }
+
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { background: #eee; border: none; padding: 10px 12px; cursor: pointer; border-radius: 6px; font-weight: bold; flex: 1; min-width: 80px; }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
+        .dash-card {
+            background: #fff; border: 2px solid var(--primary-color); border-radius: 10px;
+            padding: 20px 10px; text-align: center; cursor: pointer; transition: transform 0.2s, background 0.2s;
+        }
+
+        .dash-card:hover { transform: translateY(-3px); background: #f0f4f8; }
+        .dash-card .icon { font-size: 2em; display: block; margin-bottom: 8px; }
+        .dash-card span { font-weight: bold; color: var(--primary-color); }
+
+        .image-preview-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .image-preview { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+
+        .entry-item { background: #fff; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+        .entry-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
+        .entry-actions { margin-top: 10px; display: flex; gap: 10px; }
+        .entry-actions button { padding: 6px 12px; font-size: 0.85em; width: auto; }
+        .badge { background: #eef2f5; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; }
+        .badge-status-offen { background: #ffeaa7; color: #d63031; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .badge-status-erledigt { background: #55efc4; color: #00b894; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
+        .gallery-item { background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #ddd; }
+        .gallery-item img { width: 100%; height: 100px; object-fit: cover; display: block; }
+        .gallery-caption { padding: 5px; font-size: 0.75em; color: #555; background: #fafafa; }
+
+        /* --- UNTERSCHRIFTEN-FELD & DYNAMISCHE VERGRÖSSERUNG --- */
+        .signature-pad-container { border: 2px dashed #999; background: #fdfdfd; border-radius: 6px; position: relative; margin-top: 5px; transition: all 0.3s ease; }
+        .signature-pad-container.expanded { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(230, 126, 34, 0.3); }
+
+        canvas.signature-pad { width: 100%; height: 120px; display: block; touch-action: none; cursor: crosshair; transition: height 0.3s ease; }
+        canvas.signature-pad.expanded { height: 250px; }
+
+        .sig-btn-row { display: flex; gap: 10px; margin-top: 8px; }
+        .sig-btn-row button { padding: 6px 10px; font-size: 0.85em; }
+
+        .signature-preview { max-height: 50px; border: 1px solid #ddd; border-radius: 4px; background: #fff; margin-top: 5px; }
+
+        .buero-only { display: none !important; }
+
+        @media (max-width: 600px) { .row { flex-direction: column; gap: 0; } }
+    </style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-screen">
+    <div class="splash-content">
+        <div class="splash-logo">
+            <span class="icon">⏱️</span>
+            <div class="pulse-ring"></div>
+        </div>
+        <h1 class="splash-title">TimeHero</h1>
+        <p class="splash-subtitle">Arbeitszeit Erfassung & Aufträge</p>
+        <div class="splash-loader"><div class="loader-bar"></div></div>
+    </div>
+</div>
+
+<!-- MODAL: MODUL-AUSWAHL UND AUTHENTIFIZIERUNG -->
+<div id="authModal" class="auth-overlay" style="display:none;">
+    <div id="stepChoice" class="auth-card">
+        <h2>Bereich auswählen</h2>
+        <p>Bitte wählen Sie Ihr Modul aus:</p>
+        <div class="auth-choice-btns">
+            <button class="btn-primary" onclick="showAuthForm('buero')">🏢 Büro Modus</button>
+            <button class="btn-secondary" onclick="showAuthForm('monteur')">🛠️ Monteur Modus</button>
+        </div>
+    </div>
+
+    <div id="stepBuero" class="auth-card" style="display:none;">
+        <h2>🏢 Büro Access</h2>
+        <div class="form-group">
+            <label>E-Mail Adresse:</label>
+            <input type="email" id="bueroEmail" placeholder="name@firma.de">
+        </div>
+        <div class="form-group">
+            <label>Freischaltcode:</label>
+            <input type="text" id="bueroCode" placeholder="Code eingeben">
+        </div>
+        <button class="btn-primary" onclick="loginBuero()">Anmelden / Registrieren</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+
+    <div id="stepMonteur" class="auth-card" style="display:none;">
+        <h2>🛠️ Monteur Login</h2>
+        <div class="form-group">
+            <label>Name / Benutzername:</label>
+            <input type="text" id="monteurUser" placeholder="Dein Name">
+        </div>
+        <div class="form-group">
+            <label>Passwort:</label>
+            <input type="password" id="monteurPass" placeholder="Passwort">
+        </div>
+        <button class="btn-primary" onclick="loginMonteur()">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+</div>
+
+<!-- POPUP MODALS FÜR DIE BÜRO-KACHELN -->
+<div id="modalAuftrag" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalAuftrag')">✕</button>
+        <h3>📝 Neuen Auftrag für Monteure erstellen</h3>
+        <form id="auftragForm" onsubmit="saveAuftrag(event)">
+            <div class="row">
+                <div class="form-group">
+                    <label for="auftragKunde">Kunde:</label>
+                    <input type="text" id="auftragKunde" list="kundenDatalist" placeholder="z. B. Mustermann GmbH" required>
+                </div>
+                <div class="form-group">
+                    <label for="auftragOrt">Ort:</label>
+                    <input type="text" id="auftragOrt" placeholder="z. B. Musterstadt" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="auftragBeschreibung">Auftragsbeschreibung / Aufgaben:</label>
+                <textarea id="auftragBeschreibung" placeholder="Detaillierte Beschreibung..." required></textarea>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Zugewiesene Monteure (Mehrfachauswahl):</label>
+                    <div id="auftragMonteureCheckboxes" style="border: 1px solid #ccc; padding: 10px; border-radius: 6px; max-height: 120px; overflow-y: auto; background: #fff;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="auftragTermin">Geplantes Datum:</label>
+                    <input type="date" id="auftragTermin" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 10px;">📩 Auftrag senden</button>
+        </form>
+    </div>
+</div>
+
+<div id="modalMonteure" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalMonteure')">✕</button>
+        <h3>🔑 Monteur-Zugänge verwalten</h3>
+        <p>Legen Sie hier Namen und Passwörter fest:</p>
+        <div class="row">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="newMonteurUser" placeholder="z.B. Max">
+            </div>
+            <div class="form-group">
+                <label>Passwort:</label>
+                <input type="text" id="newMonteurPass" placeholder="Passwort">
+            </div>
+        </div>
+        <button type="button" class="btn-primary" onclick="addMonteurUser()">Zugang Speichern</button>
+        <h4 style="margin-top: 15px;">Aktive Zugänge:</h4>
+        <ul id="monteurUserList" style="list-style: none; padding: 0; margin: 0;"></ul>
+    </div>
+</div>
+
+<div id="modalLogo" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalLogo')">✕</button>
+        <h3>🖼️ Firmenlogo verwalten</h3>
+        <p>Wird auf allen Berichten angezeigt.</p>
+        <div class="form-group">
+            <label for="logoUploadInput">Neues Logo hochladen:</label>
+            <input type="file" id="logoUploadInput" accept="image/*" onchange="uploadCompanyLogo(event)">
+        </div>
+        <div style="margin-top: 10px; text-align: center;">
+            <label>Aktuelle Vorschau:</label>
+            <img id="bueroLogoPreview" class="logo-preview" src="" alt="Kein Logo" style="display:none; border: 1px dashed #ccc; padding: 5px; margin: 10px auto;">
+            <button type="button" class="btn-danger" id="deleteLogoBtn" style="display:none;" onclick="deleteCompanyLogo()">Logo löschen</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalKunden" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalKunden')">✕</button>
+        <h3>👥 Kundenstamm verwalten</h3>
+        <div class="input-row" style="margin-bottom: 15px;">
+            <input type="text" id="newCustomerName" placeholder="Kundenname...">
+            <button type="button" class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="addCustomer()">Hinzufügen</button>
+        </div>
+        <ul id="customerManageList" style="list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto;"></ul>
+    </div>
+</div>
+
+<div id="modalBackup" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalBackup')">✕</button>
+        <h3>⚙️ Daten-Verwaltung</h3>
+        <p>Sichere oder setze deine Anwendungsdaten zurück.</p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button type="button" class="btn-secondary" onclick="exportBackup()">💾 Daten Sichern (JSON)</button>
+            <button type="button" class="btn-danger" onclick="clearAllData()">🗑️ Alle Daten zurücksetzen</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="logo-header">
+        <img id="appLogo" class="logo-preview" src="" alt="Firmenlogo" style="display:none;">
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('home', event)">🏠 Start</button>
+        <button class="tab-btn" onclick="switchTab('auftraege', event)">📋 Aufträge</button>
+        <button class="tab-btn" onclick="switchTab('erfassung', event)">✏️ Eingabe</button>
+        <button class="tab-btn" onclick="switchTab('galerie', event)">🖼️ Galerie</button>
+        <button class="tab-btn" onclick="switchTab('berichte', event)">📄 Berichte</button>
+        <button class="tab-btn buero-only" id="tabBtnBuero" onclick="switchTab('buero', event)">🏢 Büro</button>
+    </div>
+
+    <!-- START TAB -->
+    <div id="tab-home" class="tab-content active">
+        <div class="card" style="text-align: center;">
+            <h2>📋 Hauptübersicht</h2>
+            <p>Eingeloggt als: <strong id="currentUserDisplay">-</strong> (<span id="currentRoleDisplay">-</span>)</p>
+
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="switchTab('auftraege')">
+                    <span class="icon">📋</span>
+                    <span>Meine Aufträge</span>
+                </div>
+                <div class="dash-card" onclick="switchTab('erfassung')">
+                    <span class="icon">✏️</span>
+                    <span>Stunden Eingeben</span>
+                </div>
+                <div class="dash-card" onclick="switchTab('galerie')">
+                    <span class="icon">🖼️</span>
+                    <span>Fotogalerie</span>
+                </div>
+                <div class="dash-card" onclick="switchTab('berichte')">
+                    <span class="icon">📄</span>
+                    <span>Berichte / Export</span>
+                </div>
+                <div class="dash-card buero-only" onclick="switchTab('buero')">
+                    <span class="icon">🏢</span>
+                    <span>Büro & Einstellungen</span>
+                </div>
+            </div>
+            <br>
+            <button class="btn-danger" style="width:auto; padding: 8px 15px;" onclick="logout()">🔒 Abmelden / Modul wechseln</button>
+        </div>
+    </div>
+
+    <!-- AUFTRÄGE TAB -->
+    <div id="tab-auftraege" class="tab-content">
+        <div class="card">
+            <h3>📋 Vorhandene Aufträge</h3>
+            <p>Übersicht aller zugewiesenen Aufträge.</p>
+            <div id="auftraegeList">Keine Aufträge vorhanden.</div>
+        </div>
+    </div>
+
+    <!-- EINGABE TAB -->
+    <div id="tab-erfassung" class="tab-content">
+        <div class="card">
+            <div class="form-group">
+                <label for="monteurName">👤 Mitarbeiter Name:</label>
+                <div class="input-row">
+                    <input type="text" id="monteurName" placeholder="Vorname Nachname" onchange="saveMonteur()">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Neuer Stundenzettel-Eintrag</h3>
+            <form id="entryForm" onsubmit="saveEntry(event)">
+                <input type="hidden" id="entryId">
+                <input type="hidden" id="connectedAuftragId">
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="kunde">1. Kunde:</label>
+                        <div class="input-row">
+                            <input type="text" id="kunde" list="kundenDatalist" placeholder="z. B. Mustermann" oninput="autofillLocationForCustomer()" onchange="autofillLocationForCustomer()" required>
+                            <datalist id="kundenDatalist"></datalist>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="ort">2. Ort:</label>
+                        <div class="input-row">
+                            <input type="text" id="ort" placeholder="z. B. Musterstadt" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="taetigkeit">3. Tätigkeit:</label>
+                    <div class="input-row">
+                        <textarea id="taetigkeit" placeholder="Durchgeführte Arbeiten..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>📷 Baustellen-Fotos:</label>
+                    <input type="file" id="taetigkeitFotos" accept="image/*" multiple onchange="handleImageUpload(event)">
+                    <div id="photoPreview" class="image-preview-container"></div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="zeit">4. Dauer (Stunden):</label>
+                        <select id="zeit" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="datum">Datum:</label>
+                        <input type="date" id="datum" required>
+                    </div>
+                </div>
+
+                <hr style="margin: 20px 0 15px 0; border: 0; border-top: 1px solid #ddd;">
+                <h4 style="margin-bottom: 10px; color: var(--primary-color);">✍️ Kundenabnahme & Zufriedenheit (Optional)</h4>
+
+                <div class="form-group">
+                    <label for="zufriedenheit">Kundenzufriedenheit:</label>
+                    <select id="zufriedenheit">
+                        <option value="">-- Keine Angabe --</option>
+                        <option value="Sehr zufrieden 😊">Sehr zufrieden 😊</option>
+                        <option value="Zufrieden 🙂">Zufrieden 🙂</option>
+                        <option value="Neutral 😐">Neutral 😐</option>
+                        <option value="Unzufrieden 🙁">Unzufrieden 🙁</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="kundenBemerkung">Bemerkung / Anmerkung des Kunden:</label>
+                    <textarea id="kundenBemerkung" placeholder="Optionales Kundenfeedback..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Unterschrift des Kunden (Tippen/Klicken zum Vergrößern):</label>
+                    <div id="sigContainer" class="signature-pad-container">
+                        <canvas id="signaturePad" class="signature-pad"></canvas>
+                    </div>
+                    <div class="sig-btn-row">
+                        <button type="button" class="btn-secondary" onclick="minimizeSignaturePad()">Fertig (Verkleinern)</button>
+                        <button type="button" class="btn-danger" onclick="clearSignature()">Löschen</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="saveBtn" style="margin-top: 15px;">Eintrag Speichern</button>
+                <button type="button" class="btn-secondary" id="cancelBtn" style="display:none; margin-top:8px;" onclick="resetForm()">Abbrechen</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GALERIE TAB -->
+    <div id="tab-galerie" class="tab-content">
+        <div class="card">
+            <h3>🖼️ Baustellen-Fotos</h3>
+            <div id="galleryContainer" class="gallery-grid"></div>
+        </div>
+    </div>
+
+    <!-- BERICHTE TAB -->
+    <div id="tab-berichte" class="tab-content">
+        <div class="card">
+            <h3>Filter & Export</h3>
+            <div class="row">
+                <div class="form-group">
+                    <label for="filterType">Zeitraum wählen:</label>
+                    <select id="filterType" onchange="updateReport()">
+                        <option value="alle">Alle Einträge</option>
+                        <option value="monat">Monat</option>
+                    </select>
+                </div>
+                <div class="form-group" id="monthFilterContainer" style="display:none;">
+                    <label for="filterValueMonth">Monat:</label>
+                    <input type="month" id="filterValueMonth" onchange="updateReport()">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Zusammenfassung</h3>
+            <p><strong>Mitarbeiter:</strong> <span id="reportMonteur">-</span></p>
+            <p><strong>Gesamtstunden:</strong> <span id="reportTotalHours" class="badge">0,00 Std.</span></p>
+            <button class="btn-secondary" onclick="exportReportAsDoc()">📄 Bericht als Word-Datei (.doc) herunterladen</button>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ccc;">
+            <div id="reportList">Keine Einträge vorhanden.</div>
+        </div>
+    </div>
+
+    <!-- BÜRO TAB (NUR KACHELN) -->
+    <div id="tab-buero" class="tab-content buero-only">
+        <div class="card" style="text-align: center;">
+            <h3>🏢 Büro-Verwaltung & Steuerung</h3>
+            <p>Wählen Sie einen Bereich aus:</p>
+
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="openModal('modalAuftrag')">
+                    <span class="icon">📝</span>
+                    <span>Neuer Auftrag</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalMonteure')">
+                    <span class="icon">🔑</span>
+                    <span>Monteure & Logins</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalLogo')">
+                    <span class="icon">🖼️</span>
+                    <span>Firmenlogo</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalKunden')">
+                    <span class="icon">👥</span>
+                    <span>Kundenstamm</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalBackup')">
+                    <span class="icon">⚙️</span>
+                    <span>Daten & Backup</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- SUPABASE KONFIGURATION ---
+    const SUPABASE_URL = 'DEINE_SUPABASE_URL';       // Hier deine Supabase URL einfügen
+    const SUPABASE_ANON_KEY = 'DEIN_SUPABASE_ANON_KEY'; // Hier deinen Supabase Anon Key einfügen
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const BUERO_ADMIN_CODE = "BUERO2026"; 
+
+    let initialEntries = [];
+    let initialAuftraege = [];
+
+    let initialKunden = ['Mustermann GmbH', 'Privatkunde Meier', 'BauAG Schmidt', 'Musterfrau KG'];
+    let defaultMonteure = [{ user: 'Max', pass: '1234' }];
+
+    let entries = [];
+    let auftraege = [];
+    let kunden = JSON.parse(localStorage.getItem('timehero_kunden')) || initialKunden;
+    let monteurUsers = JSON.parse(localStorage.getItem('timehero_monteure')) || defaultMonteure;
+    let logoDataUrl = localStorage.getItem('timehero_logo') || '';
+    let currentPhotos = [];
+    let currentSignature = '';
+    let activeSession = JSON.parse(localStorage.getItem('timehero_session')) || null;
+
+    let canvas, ctx, isDrawing = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) splash.classList.add('fade-out');
+            checkAuth();
+        }, 3000);
+
+        document.getElementById('datum').valueAsDate = new Date();
+        document.getElementById('auftragTermin').valueAsDate = new Date();
+        document.getElementById('filterValueMonth').value = new Date().toISOString().slice(0, 7);
+
+        // Daten von Supabase laden
+        await loadDataFromSupabase();
+
+        localStorage.setItem('timehero_kunden', JSON.stringify(kunden));
+        localStorage.setItem('timehero_monteure', JSON.stringify(monteurUsers));
+
+        initHoursDropdown();
+        initSignaturePad();
+        renderLogo();
+        renderKunden();
+        renderMonteurUserList();
+        renderMonteurCheckboxes();
+        renderAuftraege();
+        updateReport();
+        renderGallery();
+    });
+
+    // Funktion zum Laden aus Supabase
+    async function loadDataFromSupabase() {
+        try {
+            const { data: dbAuftraege, error: errAuftraege } = await supabaseClient.from('auftraege').select('*');
+            if (!errAuftraege && dbAuftraege) {
+                auftraege = dbAuftraege;
+            }
+
+            const { data: dbEintraege, error: errEintraege } = await supabaseClient.from('eintraege').select('*');
+            if (!errEintraege && dbEintraege) {
+                entries = dbEintraege;
+            }
+        } catch (err) {
+            console.error("Fehler beim Laden aus Supabase:", err);
+        }
+    }
+
+    /* --- MODAL STEUERUNG --- */
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    /* --- DYNAMISCHES STUNDEN-DROPDOWN --- */
+    function initHoursDropdown() {
+        const selectStunden = document.getElementById('zeit');
+        if (!selectStunden) return;
+        selectStunden.innerHTML = '';
+
+        const schrittweite = 0.25;
+        const maxStunden = 24;
+
+        for (let i = schrittweite; i <= maxStunden; i += schrittweite) {
+            const option = document.createElement('option');
+            option.value = i.toFixed(2);
+
+            const stunden = Math.floor(i);
+            const minuten = Math.round((i - stunden) * 60);
+
+            let text = `${i.toFixed(2).replace('.', ',')} Std`;
+            if (stunden > 0 && minuten > 0) {
+                text += ` (${stunden} Std ${minuten} Min)`;
+            } else if (stunden === 0) {
+                text += ` (${minuten} Min)`;
+            } else {
+                text += ` (${stunden} Std)`;
+            }
+
+            option.textContent = text;
+            if (i === 1.0) option.selected = true;
+            selectStunden.appendChild(option);
+        }
+    }
+
+    function autofillLocationForCustomer() {
+        const inputKunde = document.getElementById('kunde').value.trim().toLowerCase();
+        const inputOrt = document.getElementById('ort');
+
+        if (inputKunde !== '') {
+            const matchedEntry = entries.find(e => e.kunde && e.kunde.trim().toLowerCase() === inputKunde) ||
+                                 auftraege.find(a => a.kunde && a.kunde.trim().toLowerCase() === inputKunde);
+            if (matchedEntry && matchedEntry.ort) {
+                inputOrt.value = matchedEntry.ort;
+            }
+        }
+    }
+
+    /* --- UNTERSCHRIFTEN PAD --- */
+    function initSignaturePad() {
+        canvas = document.getElementById('signaturePad');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const tempSignature = currentSignature || canvas.toDataURL('image/png');
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000000';
+
+            if (currentSignature) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.src = tempSignature;
+            }
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function expandPad() {
+            const container = document.getElementById('sigContainer');
+            if (!canvas.classList.contains('expanded')) {
+                canvas.classList.add('expanded');
+                container.classList.add('expanded');
+                setTimeout(resizeCanvas, 300);
+            }
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function startDrawing(e) {
+            expandPad();
+            isDrawing = true;
+            const pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            if (e.type === 'touchstart') e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            if (e.type === 'touchmove') e.preventDefault();
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                currentSignature = canvas.toDataURL('image/png');
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function minimizeSignaturePad() {
+        const container = document.getElementById('sigContainer');
+        if (canvas.classList.contains('expanded')) {
+            canvas.classList.remove('expanded');
+            container.classList.remove('expanded');
+            setTimeout(() => {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000000';
+                if (currentSignature) {
+                    const img = new Image();
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = currentSignature;
+                }
+            }, 300);
+        }
+    }
+
+    function clearSignature() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        currentSignature = '';
+    }
+
+    function checkAuth() {
+        const authModal = document.getElementById('authModal');
+        if (!activeSession) {
+            authModal.style.display = 'flex';
+            resetAuthView();
+        } else {
+            authModal.style.display = 'none';
+            applySessionRole();
+        }
+    }
+
+    function showAuthForm(type) {
+        document.getElementById('stepChoice').style.display = 'none';
+        if (type === 'buero') {
+            document.getElementById('stepBuero').style.display = 'block';
+        } else {
+            document.getElementById('stepMonteur').style.display = 'block';
+        }
+    }
+
+    function resetAuthView() {
+        document.getElementById('stepChoice').style.display = 'block';
+        document.getElementById('stepBuero').style.display = 'none';
+        document.getElementById('stepMonteur').style.display = 'none';
+    }
+
+    function loginBuero() {
+        const email = document.getElementById('bueroEmail').value.trim();
+        const code = document.getElementById('bueroCode').value.trim();
+
+        if (!email.includes('@')) {
+            alert('Bitte eine gültige E-Mail-Adresse eingeben.');
+            return;
+        }
+
+        if (code !== BUERO_ADMIN_CODE) {
+            alert('Falscher Freischaltcode!');
+            return;
+        }
+
+        activeSession = { role: 'buero', user: email };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    function loginMonteur() {
+        const user = document.getElementById('monteurUser').value.trim();
+        const pass = document.getElementById('monteurPass').value.trim();
+        const match = monteurUsers.find(m => m.user.toLowerCase() === user.toLowerCase() && m.pass === pass);
+
+        if (match) {
+            activeSession = { role: 'monteur', user: match.user };
+            localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+            document.getElementById('monteurName').value = match.user;
+            localStorage.setItem('timehero_monteur', match.user);
+            checkAuth();
+        } else {
+            alert('Ungültiger Benutzername oder Passwort!');
+        }
+    }
+
+    function applySessionRole() {
+        document.getElementById('currentUserDisplay').textContent = activeSession.user;
+        document.getElementById('currentRoleDisplay').textContent = activeSession.role === 'buero' ? 'Büro' : 'Monteur';
+
+        const bueroElements = document.querySelectorAll('.buero-only');
+        if (activeSession.role === 'buero') {
+            bueroElements.forEach(el => el.style.setProperty('display', 'block', 'important'));
+        } else {
+            bueroElements.forEach(el => el.style.setProperty('display', 'none', 'important'));
+            switchTab('home');
+        }
+        renderAuftraege();
+    }
+
+    function logout() {
+        activeSession = null;
+        localStorage.removeItem('timehero_session');
+        checkAuth();
+    }
+
+    /* --- AUFTRAGS-FUNKTIONEN --- */
+    async function saveAuftrag(e) {
+        e.preventDefault();
+
+        const kundeVal = document.getElementById('auftragKunde').value.trim();
+        if (kundeVal && !kunden.includes(kundeVal)) {
+            kunden.push(kundeVal);
+            renderKunden();
+        }
+
+        const selectedCheckboxes = document.querySelectorAll('input[name="auftragMonteure"]:checked');
+        const ausgewaehlteMonteure = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+        if (ausgewaehlteMonteure.length === 0) {
+            alert('Bitte mindestens einen Monteur auswählen!');
+            return;
+        }
+
+        const ortVal = document.getElementById('auftragOrt').value.trim();
+        const beschreibungVal = document.getElementById('auftragBeschreibung').value.trim();
+        const terminVal = document.getElementById('auftragTermin').value;
+        
+        let neueAuftraegeDaten = [];
+        ausgewaehlteMonteure.forEach((monteurName) => {
+            neueAuftraegeDaten.push({
+                kunde: kundeVal,
+                ort: ortVal,
+                beschreibung: beschreibungVal,
+                monteur: monteurName,
+                termin: terminVal,
+                status: 'offen'
+            });
+        });
+
+        // In Supabase speichern
+        const { data, error } = await supabaseClient.from('auftraege').insert(neueAuftraegeDaten).select();
+
+        if (error) {
+            alert("Fehler beim Speichern der Aufträge: " + error.message);
+            return;
+        }
+
+        if (data) {
+            auftraege.unshift(...data);
+        }
+
+        document.getElementById('auftragForm').reset();
+        document.getElementById('auftragTermin').valueAsDate = new Date();
+        renderMonteurCheckboxes();
+        renderAuftraege();
+        closeModal('modalAuftrag');
+        alert(`Auftrag erfolgreich an ${ausgewaehlteMonteure.length} Monteur(e) gesendet!`);
+    }
+
+    function renderAuftraege() {
+        const container = document.getElementById('auftraegeList');
+        if (!container) return;
+        container.innerHTML = '';
+
+        let sichtbareAuftraege = [...auftraege];
+
+        if (activeSession && activeSession.role === 'monteur') {
+            sichtbareAuftraege = auftraege.filter(a => a.monteur.toLowerCase() === activeSession.user.toLowerCase());
+        }
+
+        if (sichtbareAuftraege.length === 0) {
+            container.innerHTML = '<p style="color:#777;">Keine zugewiesenen Aufträge vorhanden.</p>';
+            return;
+        }
+
+        sichtbareAuftraege.forEach(a => {
+            const statusBadge = a.status === 'erledigt' 
+                ? '<span class="badge-status-erledigt">✓ Erledigt</span>' 
+                : '<span class="badge-status-offen">⏳ Offen</span>';
+
+            const actionBtn = a.status === 'offen' 
+                ? `<button class="btn-success" onclick="startAuftragErfassung('${a.id}')">⚡ Auftragsarbeiten erfassen</button>` 
+                : '';
+
+            const deleteBtn = activeSession && activeSession.role === 'buero' 
+                ? `<button class="btn-danger" onclick="deleteAuftrag('${a.id}')">🗑️ Löschen</button>` 
+                : '';
+
+            const div = document.createElement('div');
+            div.className = 'entry-item';
+            div.innerHTML = `
+                <div class="entry-header">
+                    <span>👤 ${escapeHtml(a.kunde)} | 📍 ${escapeHtml(a.ort)}</span>
+                    <div>${statusBadge} <span class="badge">📅 ${new Date(a.termin).toLocaleDateString('de-DE')}</span></div>
+                </div>
+                <div><strong>Zugewiesen an:</strong> 🛠️ ${escapeHtml(a.monteur)}</div>
+                <div style="margin-top:5px;">📋 <strong>Aufgaben:</strong> ${escapeHtml(a.beschreibung)}</div>
+                <div class="entry-actions">
+                    ${actionBtn}
+                    ${deleteBtn}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function startAuftragErfassung(auftragId) {
+        const auftrag = auftraege.find(a => a.id == auftragId);
+        if (!auftrag) return;
+
+        switchTab('erfassung');
+        document.getElementById('kunde').value = auftrag.kunde;
+        document.getElementById('ort').value = auftrag.ort;
+        document.getElementById('taetigkeit').value = auftrag.beschreibung;
+        document.getElementById('connectedAuftragId').value = auftrag.id;
+        alert(`Auftrag für ${auftrag.kunde} übernommen.`);
+    }
+
+    async function deleteAuftrag(id) {
+        if (confirm("Auftrag wirklich löschen?")) {
+            const { error } = await supabaseClient.from('auftraege').delete().eq('id', id);
+            if (!error) {
+                auftraege = auftraege.filter(a => a.id != id);
+                renderAuftraege();
+            } else {
+                alert("Fehler beim Löschen: " + error.message);
+            }
+        }
+    }
+
+    function renderMonteurCheckboxes() {
+        const container = document.getElementById('auftragMonteureCheckboxes');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (monteurUsers.length === 0) {
+            container.innerHTML = '<small style="color:#777;">Keine Monteure angelegt.</small>';
+            return;
+        }
+
+        monteurUsers.forEach(m => {
+            const label = document.createElement('label');
+            label.style.cssText = "display: flex; align-items: center; gap: 8px; font-weight: normal; margin-bottom: 5px; cursor: pointer;";
+            label.innerHTML = `
+                <input type="checkbox" name="auftragMonteure" value="${escapeHtml(m.user)}" style="width: auto;">
+                <span>🛠️ ${escapeHtml(m.user)}</span>
+            `;
+            container.appendChild(label);
+        });
+    }
+
+    function addMonteurUser() {
+        const user = document.getElementById('newMonteurUser').value.trim();
+        const pass = document.getElementById('newMonteurPass').value.trim();
+
+        if (!user || !pass) {
+            alert('Bitte sowohl Name als auch Passwort ausfüllen.');
+            return;
+        }
+
+        const existingIndex = monteurUsers.findIndex(m => m.user.toLowerCase() === user.toLowerCase());
+        if (existingIndex !== -1) {
+            monteurUsers[existingIndex].pass = pass;
+        } else {
+            monteurUsers.push({ user, pass });
+        }
+
+        localStorage.setItem('timehero_monteure', JSON.stringify(monteurUsers));
+        renderMonteurUserList();
+        renderMonteurCheckboxes();
+        document.getElementById('newMonteurUser').value = '';
+        document.getElementById('newMonteurPass').value = '';
+        alert(`Zugang für ${user} gespeichert!`);
+    }
+
+    function deleteMonteurUser(index) {
+        if (confirm(`Zugang für "${monteurUsers[index].user}" löschen?`)) {
+            monteurUsers.splice(index, 1);
+            localStorage.setItem('timehero_monteure', JSON.stringify(monteurUsers));
+            renderMonteurUserList();
+            renderMonteurCheckboxes();
+        }
+    }
+
+    function renderMonteurUserList() {
+        const list = document.getElementById('monteurUserList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        monteurUsers.forEach((m, idx) => {
+            const li = document.createElement('li');
+            li.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;";
+            li.innerHTML = `
+                <span>👤 <strong>${escapeHtml(m.user)}</strong> (Passwort: ${escapeHtml(m.pass)})</span>
+                <button style="width: auto; padding: 4px 10px;" class="btn-danger" onclick="deleteMonteurUser(${idx})">Löschen</button>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function uploadCompanyLogo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width, height = img.height;
+                const max_size = 350;
+
+                if (width > height) {
+                    if (width > max_size) { height *= max_size / width; width = max_size; }
+                } else {
+                    if (height > max_size) { width *= max_size / height; height = max_size; }
+                }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                logoDataUrl = canvas.toDataURL('image/png');
+                localStorage.setItem('timehero_logo', logoDataUrl);
+                renderLogo();
+                alert("Firmenlogo erfolgreich aktualisiert!");
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function deleteCompanyLogo() {
+        if (confirm("Möchtest du das Firmenlogo wirklich löschen?")) {
+            logoDataUrl = '';
+            localStorage.removeItem('timehero_logo');
+            renderLogo();
+        }
+    }
+
+    function renderLogo() {
+        const appLogo = document.getElementById('appLogo');
+        const bueroLogo = document.getElementById('bueroLogoPreview');
+        const deleteBtn = document.getElementById('deleteLogoBtn');
+
+        if (logoDataUrl) {
+            appLogo.src = logoDataUrl;
+            appLogo.style.display = 'block';
+            bueroLogo.src = logoDataUrl;
+            bueroLogo.style.display = 'block';
+            deleteBtn.style.display = 'inline-block';
+        } else {
+            appLogo.style.display = 'none';
+            bueroLogo.style.display = 'none';
+            deleteBtn.style.display = 'none';
+        }
+    }
+
+    function renderKunden() {
+        const datalist = document.getElementById('kundenDatalist');
+        const manageList = document.getElementById('customerManageList');
+        
+        datalist.innerHTML = '';
+        if (manageList) manageList.innerHTML = '';
+
+        kunden.forEach((k, index) => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            datalist.appendChild(opt);
+
+            if (manageList) {
+                const li = document.createElement('li');
+                li.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;";
+                li.innerHTML = `
+                    <span>${escapeHtml(k)}</span>
+                    <button style="width: auto; padding: 4px 10px;" class="btn-danger" onclick="deleteCustomer(${index})">Löschen</button>
+                `;
+                manageList.appendChild(li);
+            }
+        });
+
+        localStorage.setItem('timehero_kunden', JSON.stringify(kunden));
+    }
+
+    function addCustomer() {
+        const input = document.getElementById('newCustomerName');
+        const val = input.value.trim();
+        if (val && !kunden.includes(val)) {
+            kunden.push(val);
+            kunden.sort();
+            renderKunden();
+            input.value = '';
+        }
+    }
+
+    function deleteCustomer(index) {
+        if (confirm(`Kunde "${kunden[index]}" entfernen?`)) {
+            kunden.splice(index, 1);
+            renderKunden();
+        }
+    }
+
+    function handleImageUpload(event) {
+        const files = Array.from(event.target.files);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    const max_size = 800;
+
+                    if (width > height) {
+                        if (width > max_size) { height *= max_size / width; width = max_size; }
+                    } else {
+                        if (height > max_size) { width *= max_size / height; height = max_size; }
+                    }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    currentPhotos.push(canvas.toDataURL('image/jpeg', 0.6));
+                    renderPhotoPreviews();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderPhotoPreviews() {
+        const container = document.getElementById('photoPreview');
+        container.innerHTML = '';
+        currentPhotos.forEach((src, index) => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'image-preview';
+            img.onclick = () => {
+                currentPhotos.splice(index, 1);
+                renderPhotoPreviews();
+            };
+            container.appendChild(img);
+        });
+    }
+
+    async function saveEntry(e) {
+        e.preventDefault();
+
+        const id = document.getElementById('entryId').value;
+        const connectedAuftragId = document.getElementById('connectedAuftragId').value;
+        const zeitParsed = parseFloat(document.getElementById('zeit').value);
+
+        if (isNaN(zeitParsed) || zeitParsed <= 0) {
+            alert("Bitte eine gültige Stundenzahl auswählen.");
+            return;
+        }
+
+        const kundeVal = document.getElementById('kunde').value.trim();
+        if (kundeVal && !kunden.includes(kundeVal)) {
+            kunden.push(kundeVal);
+            renderKunden();
+        }
+
+        const entryData = {
+            monteur: document.getElementById('monteurName').value || activeSession.user,
+            datum: document.getElementById('datum').value,
+            zeit: zeitParsed,
+            kunde: kundeVal,
+            ort: document.getElementById('ort').value,
+            taetigkeit: document.getElementById('taetigkeit').value,
+            fotos: [...currentPhotos],
+            zufriedenheit: document.getElementById('zufriedenheit').value,
+            kundenBemerkung: document.getElementById('kundenBemerkung').value,
+            unterschrift: currentSignature
+        };
+
+        if (id) {
+            // Update in Supabase
+            const { data, error } = await supabaseClient.from('eintraege').update(entryData).eq('id', id).select();
+            if (error) {
+                alert("Fehler beim Aktualisieren: " + error.message);
+                return;
+            }
+            const index = entries.findIndex(item => item.id == id);
+            if (index !== -1 && data && data[0]) entries[index] = data[0];
+        } else {
+            // Insert in Supabase
+            const { data, error } = await supabaseClient.from('eintraege').insert([entryData]).select();
+            if (error) {
+                alert("Fehler beim Speichern in Supabase: " + error.message);
+                return;
+            }
+            if (data && data[0]) {
+                entries.unshift(data[0]);
+            }
+        }
+
+        if (connectedAuftragId) {
+            const targetAuftrag = auftraege.find(a => a.id == connectedAuftragId);
+            if (targetAuftrag) {
+                targetAuftrag.status = 'erledigt';
+                await supabaseClient.from('auftraege').update({ status: 'erledigt' }).eq('id', targetAuftrag.id);
+            }
+        }
+
+        minimizeSignaturePad();
+        resetForm();
+        updateReport();
+        renderGallery();
+        renderAuftraege();
+        alert("Eintrag erfolgreich in Supabase gespeichert!");
+    }
+
+    function editEntry(id) {
+        const entry = entries.find(item => item.id == id);
+        if (!entry) return;
+
+        switchTab('erfassung');
+
+        document.getElementById('entryId').value = entry.id;
+        document.getElementById('datum').value = entry.datum;
+        document.getElementById('zeit').value = entry.zeit.toFixed(2);
+        document.getElementById('kunde').value = entry.kunde;
+        document.getElementById('ort').value = entry.ort;
+        document.getElementById('taetigkeit').value = entry.taetigkeit;
+        document.getElementById('zufriedenheit').value = entry.zufriedenheit || '';
+        document.getElementById('kundenBemerkung').value = entry.kundenBemerkung || '';
+
+        currentPhotos = entry.fotos || [];
+        renderPhotoPreviews();
+
+        clearSignature();
+        if (entry.unterschrift) {
+            currentSignature = entry.unterschrift;
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = entry.unterschrift;
+        }
+
+        document.getElementById('saveBtn').textContent = 'Änderungen Speichern';
+        document.getElementById('cancelBtn').style.display = 'block';
+    }
+
+    async function deleteEntry(id) {
+        if (confirm("Eintrag wirklich löschen?")) {
+            const { error } = await supabaseClient.from('eintraege').delete().eq('id', id);
+            if (!error) {
+                entries = entries.filter(item => item.id != id);
+                updateReport();
+                renderGallery();
+            } else {
+                alert("Fehler beim Löschen: " + error.message);
+            }
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('entryForm').reset();
+        document.getElementById('entryId').value = '';
+        document.getElementById('connectedAuftragId').value = '';
+        document.getElementById('datum').valueAsDate = new Date();
+        document.getElementById('zeit').value = "1.00";
+        currentPhotos = [];
+        renderPhotoPreviews();
+        clearSignature();
+        minimizeSignaturePad();
+        document.getElementById('saveBtn').textContent = 'Eintrag Speichern';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    function updateReport() {
+        const filterType = document.getElementById('filterType').value;
+        const monteur = document.getElementById('monteurName').value || (activeSession ? activeSession.user : 'Nicht angegeben');
+        document.getElementById('reportMonteur').textContent = monteur;
+
+        const monthContainer = document.getElementById('monthFilterContainer');
+        let filtered = [...entries];
+
+        if (filterType === 'monat') {
+            monthContainer.style.display = 'block';
+            const val = document.getElementById('filterValueMonth').value;
+            if (val) filtered = entries.filter(e => e.datum && e.datum.startsWith(val));
+        } else {
+            monthContainer.style.display = 'none';
+        }
+
+        const totalHours = filtered.reduce((sum, item) => sum + Number(item.zeit), 0);
+        document.getElementById('reportTotalHours').textContent = `${totalHours.toFixed(2).replace('.', ',')} Std.`;
+
+        const reportList = document.getElementById('reportList');
+        reportList.innerHTML = '';
+
+        if (filtered.length === 0) {
+            reportList.innerHTML = '<p style="color:#777;">Keine Einträge im Zeitraum vorhanden.</p>';
+            return;
+        }
+
+        filtered.forEach(e => {
+            let photosHtml = '';
+            if (e.fotos && e.fotos.length > 0) {
+                photosHtml = '<div class="image-preview-container">' + 
+                    e.fotos.map(img => `<img src="${img}" class="image-preview">`).join('') + 
+                    '</div>';
+            }
+
+            let feedbackHtml = '';
+            if (e.zufriedenheit || e.kundenBemerkung || e.unterschrift) {
+                feedbackHtml = `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ddd; font-size: 0.9em; color: #444;">`;
+                if (e.zufriedenheit) feedbackHtml += `<div><strong>Zufriedenheit:</strong> ${escapeHtml(e.zufriedenheit)}</div>`;
+                if (e.kundenBemerkung) feedbackHtml += `<div><strong>Bemerkung:</strong> <em>"${escapeHtml(e.kundenBemerkung)}"</em></div>`;
+                if (e.unterschrift) feedbackHtml += `<div><strong>Unterschrift:</strong><br><img src="${e.unterschrift}" class="signature-preview"></div>`;
+                feedbackHtml += `</div>`;
+            }
+
+            const deleteBtnHtml = activeSession && activeSession.role === 'buero' ? 
+                `<button class="btn-danger" onclick="deleteEntry('${e.id}')">🗑️ Löschen</button>` : '';
+
+            const div = document.createElement('div');
+            div.className = 'entry-item';
+            div.innerHTML = `
+                <div class="entry-header">
+                    <span>👤 ${escapeHtml(e.kunde)} | 📍 ${escapeHtml(e.ort)}</span>
+                    <span class="badge">⏱️ ${Number(e.zeit).toFixed(2).replace('.', ',')} Std. (${new Date(e.datum).toLocaleDateString('de-DE')})</span>
+                </div>
+                <div>📝 ${escapeHtml(e.taetigkeit)}</div>
+                ${photosHtml}
+                ${feedbackHtml}
+                <div class="entry-actions">
+                    <button class="btn-secondary" onclick="editEntry('${e.id}')">✏️ Bearbeiten</button>
+                    ${deleteBtnHtml}
+                </div>
+            `;
+            reportList.appendChild(div);
+        });
+    }
+
+    function renderGallery() {
+        const container = document.getElementById('galleryContainer');
+        container.innerHTML = '';
+        let hasPhotos = false;
+
+        entries.forEach(e => {
+            if (e.fotos && e.fotos.length > 0) {
+                e.fotos.forEach(f => {
+                    hasPhotos = true;
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    item.innerHTML = `
+                        <a href="${f}" target="_blank"><img src="${f}" alt="Foto"></a>
+                        <div class="gallery-caption">
+                            <strong>${escapeHtml(e.kunde)}</strong><br>
+                            <small>${new Date(e.datum).toLocaleDateString('de-DE')}</small>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+        });
+
+        if (!hasPhotos) {
+            container.innerHTML = '<p style="color:#777;">Keine Baustellenfotos gespeichert.</p>';
+        }
+    }
+
+    function exportReportAsDoc() {
+        const monteur = document.getElementById('monteurName').value || 'Unbekannt';
+        let logoHtml = logoDataUrl ? `<img src="${logoDataUrl}" style="max-height:80px; margin-bottom:15px;"><br>` : '';
+
+        let tableRows = entries.map(e => {
+            let infoFeedback = '';
+            if (e.zufriedenheit) infoFeedback += `<br><strong>Zufriedenheit:</strong> ${escapeHtml(e.zufriedenheit)}`;
+            if (e.kundenBemerkung) infoFeedback += `<br><strong>Bemerkung:</strong> ${escapeHtml(e.kundenBemerkung)}`;
+            if (e.unterschrift) infoFeedback += `<br><strong>Unterschrift:</strong><br><img src="${e.unterschrift}" style="max-height:40px;">`;
+
+            return `
+            <tr>
+                <td style="border:1px solid #ccc; padding:8px;">${new Date(e.datum).toLocaleDateString('de-DE')}</td>
+                <td style="border:1px solid #ccc; padding:8px;">${escapeHtml(e.kunde)}</td>
+                <td style="border:1px solid #ccc; padding:8px;">${escapeHtml(e.ort)}</td>
+                <td style="border:1px solid #ccc; padding:8px;">${escapeHtml(e.taetigkeit)}${infoFeedback}</td>
+                <td style="border:1px solid #ccc; padding:8px; text-align:right;">${Number(e.zeit).toFixed(2).replace('.', ',')} Std.</td>
+            </tr>
+            `;
+        }).join('');
+
+        let content = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>Stundenzettel</title></head>
+            <body style="font-family:Arial, sans-serif;">
+                <div style="text-align:center;">${logoHtml}</div>
+                <h2>Arbeitszeitbericht / Stundenzettel</h2>
+                <p><strong>Mitarbeiter:</strong> ${escapeHtml(monteur)}</p>
+                <br>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#eee;">
+                            <th style="border:1px solid #ccc; padding:8px;">Datum</th>
+                            <th style="border:1px solid #ccc; padding:8px;">Kunde</th>
+                            <th style="border:1px solid #ccc; padding:8px;">Ort</th>
+                            <th style="border:1px solid #ccc; padding:8px;">Tätigkeit / Details</th>
+                            <th style="border:1px solid #ccc; padding:8px;">Zeit</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Stundenzettel_${new Date().toISOString().slice(0, 10)}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function switchTab(tabName, evt) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        
+        if (evt && evt.target) {
+            evt.target.classList.add('active');
+        } else {
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabName));
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+
+        if (tabName === 'erfassung') {
+            setTimeout(() => {
+                if (canvas && ctx) {
+                    const rect = canvas.getBoundingClientRect();
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.strokeStyle = '#000000';
+                }
+            }, 100);
+        }
+
+        if (tabName === 'auftraege') renderAuftraege();
+        if (tabName === 'berichte') updateReport();
+        if (tabName === 'galerie') renderGallery();
+    }
+
+    function saveMonteur() {
+        localStorage.setItem('timehero_monteur', document.getElementById('monteurName').value);
+    }
+
+    function escapeHtml(text) {
+        return text ? text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : '';
+    }
+
+    function exportBackup() {
+        const data = { entries, auftraege, kunden, monteurUsers, logoDataUrl, monteur: localStorage.getItem('timehero_monteur') };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `timehero_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+    }
+
+    function clearAllData() {
+        if (confirm("WARNUNG: Lokale Sitzungsdaten zurücksetzen? (Datenbank in Supabase bleibt erhalten)")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+    </html>            z-index: 9999;
             transition: opacity 0.6s ease, visibility 0.6s ease;
             color: #ffffff; text-align: center;
         }
