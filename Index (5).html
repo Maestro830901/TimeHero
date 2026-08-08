@@ -422,6 +422,578 @@
 <script>
     // --- SUPABASE CONFIGURATION ---
     const SUPABASE_URL = "https://uelqwtaqyyjfdrziktej.supabase.co";    
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbHF3dGFxeXlqZmRyemlrdGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODUwNDMsImV4cCI6MjEwMTc2MTA0M30.uwIM5MqWI7iKOaPFfVyx_RhmKDqBuptvsa5LKSe1FPY";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const BUERO_ADMIN_CODE = "BUERO2026";
+
+    let activeSession = JSON.parse(localStorage.getItem('timehero_session')) || null;
+    let currentPhotos = [];
+    let currentSignature = '';
+    let canvas, ctx, isDrawing = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) splash.classList.add('fade-out');
+            checkAuth();
+        }, 1500);
+
+        document.getElementById('datum').valueAsDate = new Date();
+        document.getElementById('auftragTermin').valueAsDate = new Date();
+        initHoursDropdown();
+        initSignaturePad();
+    });
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function initHoursDropdown() {
+        const selectStunden = document.getElementById('zeit');
+        if (!selectStunden) return;
+        selectStunden.innerHTML = '';
+        for (let i = 0.25; i <= 24; i += 0.25) {
+            const option = document.createElement('option');
+            option.value = i.toFixed(2);
+            option.textContent = `${i.toFixed(2).replace('.', ',')} Std`;
+            if (i === 1.0) option.selected = true;
+            selectStunden.appendChild(option);
+        }
+    }
+
+    function initSignaturePad() {
+        canvas = document.getElementById('signaturePad');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width || 300; 
+        canvas.height = rect.height || 120;
+        
+        ctx.lineWidth = 2; 
+        ctx.lineCap = 'round'; 
+        ctx.strokeStyle = '#000';
+
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { 
+                x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, 
+                y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top 
+            };
+        }
+
+        function start(e) { 
+            isDrawing = true; 
+            const p = getPos(e); 
+            ctx.beginPath(); 
+            ctx.moveTo(p.x, p.y); 
+            if(e.touches) e.preventDefault(); 
+        }
+
+        function draw(e) { 
+            if(!isDrawing) return; 
+            const p = getPos(e); 
+            ctx.lineTo(p.x, p.y); 
+            ctx.stroke(); 
+            if(e.touches) e.preventDefault(); 
+        }
+
+        function stop() { 
+            if(isDrawing) { 
+                isDrawing = false; 
+                currentSignature = canvas.toDataURL('image/png'); 
+            } 
+        }
+
+        canvas.addEventListener('mousedown', start); 
+        canvas.addEventListener('mousemove', draw); 
+        canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('touchstart', start, {passive: false}); 
+        canvas.addEventListener('touchmove', draw, {passive: false}); 
+        canvas.addEventListener('touchend', stop);
+    }
+
+    function clearSignature() {
+        if(!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        currentSignature = '';
+    }
+
+    function checkAuth() {
+        if (!activeSession) {
+            document.getElementById('authModal').style.display = 'flex';
+            resetAuthView();
+        } else {
+            document.getElementById('authModal').style.display = 'none';
+            applySessionRole();
+        }
+    }
+
+    function showAuthForm(type) {
+        document.getElementById('stepChoice').style.display = 'none';
+        document.getElementById(type === 'buero' ? 'stepBuero' : 'stepMonteur').style.display = 'block';
+    }
+
+    function resetAuthView() {
+        document.getElementById('stepChoice').style.display = 'block';
+        document.getElementById('stepBuero').style.display = 'none';
+        document.getElementById('stepMonteur').style.display = 'none';
+    }
+
+    function loginBuero() {
+        if(document.getElementById('bueroCode').value.trim() !== BUERO_ADMIN_CODE) { 
+            alert('Falscher Code'); 
+            return; 
+        }
+        activeSession = { role: 'buero', user: document.getElementById('bueroEmail').value };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    async function loginMonteur() {
+        const user = document.getElementById('monteurUser').value.trim();
+        const pass = document.getElementById('monteurPassword').value.trim();
+
+        if(!user || !pass) { 
+            alert('Bitte Name und Passwort eingeben.'); 
+            return; 
+        }
+
+        const { data, error } = await supabaseClient
+            .from('monteurs')
+            .select('*')
+            .eq('name', user)
+            .eq('password', pass)
+            .single();
+
+        if (error || !data) {
+            alert('Zugriff verweigert! Entweder existiert kein Monteur mit diesem Namen, das Passwort ist falsch oder du wurdest noch nicht vom Büro ernannt.');
+            return;
+        }
+
+        activeSession = { role: 'monteur', user: user };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    function applySessionRole() {
+        document.getElementById('currentUserDisplay').textContent = activeSession.user;
+        document.getElementById('currentRoleDisplay').textContent = activeSession.role === 'buero' ? 'Büro' : 'Monteur';
+        document.querySelectorAll('.buero-only').forEach(el => {
+            el.style.setProperty('display', activeSession.role === 'buero' ? 'block' : 'none', 'important');
+        });
+        loadDataFromServer();
+    }
+
+    function logout() {
+        localStorage.removeItem('timehero_session');
+        activeSession = null;
+        checkAuth();
+    }
+
+    // --- DATENBANK OPERATIONEN ---
+    async function saveAuftrag(e) {
+        e.preventDefault();
+        const auftrag = {
+            kunde: document.getElementById('auftragKunde').value,
+            ort: document.getElementById('auftragOrt').value,
+            beschreibung: document.getElementById('auftragBeschreibung').value,
+            monteur: document.getElementById('auftragMonteurName').value,
+            termin: document.getElementById('auftragTermin').value,
+            status: 'offen'
+        };
+
+        const { error } = await supabaseClient.from('auftraege').insert([auftrag]);
+        if(error) { 
+            alert('Fehler beim Speichern des Auftrags: ' + error.message); 
+            return; 
+        }
+
+        alert('Auftrag erfolgreich gespeichert!');
+        document.getElementById('auftragForm').reset();
+        closeModal('modalAuftrag');
+        loadDataFromServer();
+    }
+
+    async function saveMonteurCredential(e) {
+        e.preventDefault();
+        const name = document.getElementById('newMonteurName').value.trim();
+        const password = document.getElementById('newMonteurPass').value.trim();
+
+        const { error } = await supabaseClient
+            .from('monteurs')
+            .upsert([{ name, password }], { onConflict: ['name'] });
+
+        if(error) {
+            alert('Fehler beim Speichern des Monteurs: ' + error.message);
+            return;
+        }
+
+        alert(`Monteur "${name}" erfolgreich ernannt und Passwort vergeben!`);
+        document.getElementById('ernennenForm').reset();
+        closeModal('modalMonteurErnennen');
+    }
+
+    async function saveEntry(e) {
+        e.preventDefault();
+        const entry = {
+            monteur: activeSession.user,
+            kunde: document.getElementById('kunde').value,
+            ort: document.getElementById('ort').value,
+            taetigkeit: document.getElementById('taetigkeit').value,
+            zeit: parseFloat(document.getElementById('zeit').value),
+            datum: document.getElementById('datum').value,
+            fotos: currentPhotos,
+            unterschrift: currentSignature
+        };
+
+        const { error } = await supabaseClient.from('eintraege').insert([entry]);
+        if(error) { 
+            alert('Fehler beim Speichern des Eintrags: ' + error.message); 
+            return; 
+        }
+
+        alert('Stundenzettel erfolgreich gespeichert!');
+        document.getElementById('entryForm').reset();
+        currentPhotos = []; 
+        clearSignature();
+        loadDataFromServer();
+    }
+
+    async function loadDataFromServer() {
+        try {
+            let query = supabaseClient.from('auftraege').select('*');
+            if (activeSession && activeSession.role === 'monteur') {
+                query = query.eq('monteur', activeSession.user);
+            }
+            const { data: auftraegeData, err1 } = await query;
+            if(!err1) renderAuftraege(auftraegeData || []);
+
+            const { data: eintraegeData, err2 } = await supabaseClient.from('eintraege').select('*');
+            if(!err2) {
+                renderBerichte(eintraegeData || []);
+                renderGalerie(eintraegeData || []);
+            }
+        } catch(err) {
+            console.error("Ladefehler:", err);
+        }
+    }
+
+    function renderAuftraege(data) {
+        const container = document.getElementById('auftraegeList');
+        if(!container) return;
+        if(data.length === 0) { 
+            container.innerHTML = '<p style="color:#777;">Keine Aufträge vorhanden.</p>'; 
+            return; 
+        }
+        
+        container.innerHTML = data.map(a => `
+            <div class="entry-item">
+                <strong>${escapeHtml(a.kunde)}</strong> (${escapeHtml(a.ort)}) - 🛠️ ${escapeHtml(a.monteur)}<br>
+                <small>📅 ${a.termin} | Status: ${a.status}</small>
+                <div>${escapeHtml(a.beschreibung)}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderBerichte(data) {
+        const container = document.getElementById('reportList');
+        if(!container) return;
+        const total = data.reduce((acc, curr) => acc + Number(curr.zeit || 0), 0);
+        document.getElementById('reportTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        document.getElementById('reportMonteur').textContent = activeSession ? activeSession.user : '-';
+
+        if(data.length === 0) {
+            container.innerHTML = '<p style="color:#777;">Keine Berichte vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = data.map(e => `
+            <div class="entry-item">
+                <strong>${escapeHtml(e.kunde)}</strong> (${escapeHtml(e.ort)}) - ⏱️ ${e.zeit} Std.<br>
+                <div>${escapeHtml(e.taetigkeit)}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderGalerie(data) {
+        const container = document.getElementById('galleryContainer');
+        if(!container) return;
+        let allPhotos = [];
+        data.forEach(item => {
+            if (item.fotos && Array.isArray(item.fotos)) {
+                item.fotos.forEach(photo => {
+                    allPhotos.push({ src: photo, kunde: item.kunde, datum: item.datum });
+                });
+            }
+        });
+
+        if(allPhotos.length === 0) {
+            container.innerHTML = '<p style="color:#777;">Keine Bilder vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = allPhotos.map(p => `
+            <div class="gallery-item">
+                <img src="${p.src}" alt="Foto">
+                <div class="gallery-caption">${escapeHtml(p.kunde)}<br>${p.datum}</div>
+            </div>
+        `).join('');
+    }
+
+    function handleImageUpload(e) {
+        Array.from(e.target.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = ev => { 
+                currentPhotos.push(ev.target.result); 
+                renderPhotos(); 
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderPhotos() {
+        document.getElementById('photoPreview').innerHTML = currentPhotos.map(p => `<img src="${p}" class="image-preview">`).join('');
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        const targetTab = document.getElementById(`tab-${name}`);
+        if(targetTab) targetTab.classList.add('active');
+
+        const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(name));
+        if(activeBtn) activeBtn.classList.add('active');
+    }
+
+    function escapeHtml(text) {
+        return text ? text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : '';
+    }
+</script>
+
+</body>
+                        </html>- AUTH MODAL -->
+<div id="authModal" class="auth-overlay" style="display:none;">
+    <div id="stepChoice" class="auth-card">
+        <h2>Bereich auswählen</h2>
+        <p>Modus wählen:</p>
+        <div class="auth-choice-btns">
+            <button class="btn-primary" onclick="showAuthForm('buero')">🏢 Büro Modus</button>
+            <button class="btn-secondary" onclick="showAuthForm('monteur')">🛠️ Monteur Modus</button>
+        </div>
+    </div>
+
+    <div id="stepBuero" class="auth-card" style="display:none;">
+        <h2>🏢 Büro Access</h2>
+        <div class="form-group">
+            <label>E-Mail Adresse:</label>
+            <input type="email" id="bueroEmail" placeholder="name@firma.de">
+        </div>
+        <div class="form-group">
+            <label>Freischaltcode:</label>
+            <input type="password" id="bueroCode" placeholder="Code eingeben">
+        </div>
+        <button class="btn-primary" onclick="loginBuero()">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+
+    <div id="stepMonteur" class="auth-card" style="display:none;">
+        <h2>🛠️ Monteur Login</h2>
+        <div class="form-group">
+            <label>Name / Benutzername:</label>
+            <input type="text" id="monteurUser" placeholder="Dein Name">
+        </div>
+        <div class="form-group">
+            <label>Passwort:</label>
+            <input type="password" id="monteurPassword" placeholder="Dein Passwort">
+        </div>
+        <button class="btn-primary" onclick="loginMonteur()">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+</div>
+
+<!-- MODAL: NEUER AUFTRAG -->
+<div id="modalAuftrag" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalAuftrag')">✕</button>
+        <h3>📝 Neuen Auftrag erstellen</h3>
+        <form id="auftragForm" onsubmit="saveAuftrag(event)">
+            <div class="row">
+                <div class="form-group">
+                    <label>Kunde:</label>
+                    <input type="text" id="auftragKunde" placeholder="Kundenname" required>
+                </div>
+                <div class="form-group">
+                    <label>Ort:</label>
+                    <input type="text" id="auftragOrt" placeholder="Ort" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung:</label>
+                <textarea id="auftragBeschreibung" placeholder="Aufgaben..." required></textarea>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Monteur Name:</label>
+                    <input type="text" id="auftragMonteurName" placeholder="z. B. Max" required>
+                </div>
+                <div class="form-group">
+                    <label>Datum:</label>
+                    <input type="date" id="auftragTermin" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px;">Auftrag speichern</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: MONTEUR ERNENNEN (BÜRO) -->
+<div id="modalMonteurErnennen" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalMonteurErnennen')">✕</button>
+        <h3>🛠️ Monteur ernennen & Passwort vergeben</h3>
+        <form id="ernennenForm" onsubmit="saveMonteurCredential(event)">
+            <div class="form-group">
+                <label>Monteur Name:</label>
+                <input type="text" id="newMonteurName" placeholder="Exakter Name des Monteurs" required>
+            </div>
+            <div class="form-group">
+                <label>Passwort vergeben:</label>
+                <input type="password" id="newMonteurPass" placeholder="Sicheres Passwort" required>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px;">Speichern & Freigeben</button>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+    <div class="logo-header">
+        <img id="appLogo" class="logo-preview" src="" alt="Firmenlogo" style="display:none;">
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('home', event)">🏠 Start</button>
+        <button class="tab-btn" onclick="switchTab('auftraege', event)">📋 Aufträge</button>
+        <button class="tab-btn" onclick="switchTab('erfassung', event)">✏️ Eingabe</button>
+        <button class="tab-btn" onclick="switchTab('galerie', event)">🖼️ Galerie</button>
+        <button class="tab-btn" onclick="switchTab('berichte', event)">📄 Berichte</button>
+        <button class="tab-btn buero-only" id="tabBtnBuero" onclick="switchTab('buero', event)">🏢 Büro</button>
+    </div>
+
+    <!-- START TAB -->
+    <div id="tab-home" class="tab-content active">
+        <div class="card" style="text-align: center;">
+            <h2>📋 Übersicht</h2>
+            <p>Eingeloggt als: <strong id="currentUserDisplay">-</strong> (<span id="currentRoleDisplay">-</span>)</p>
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="switchTab('auftraege')"><span class="icon">📋</span><span>Aufträge</span></div>
+                <div class="dash-card" onclick="switchTab('erfassung')"><span class="icon">✏️</span><span>Stunden</span></div>
+                <div class="dash-card" onclick="switchTab('galerie')"><span class="icon">🖼️</span><span>Galerie</span></div>
+                <div class="dash-card" onclick="switchTab('berichte')"><span class="icon">📄</span><span>Berichte</span></div>
+                <div class="dash-card buero-only" onclick="switchTab('buero')"><span class="icon">🏢</span><span>Büro</span></div>
+            </div>
+            <br>
+            <button class="btn-danger" style="width:auto; padding: 8px 15px;" onclick="logout()">🔒 Abmelden</button>
+        </div>
+    </div>
+
+    <!-- AUFTRÄGE TAB -->
+    <div id="tab-auftraege" class="tab-content">
+        <div class="card">
+            <h3>📋 Aufträge</h3>
+            <div id="auftraegeList">Lade Aufträge...</div>
+        </div>
+    </div>
+
+    <!-- ERFASSUNG TAB -->
+    <div id="tab-erfassung" class="tab-content">
+        <div class="card">
+            <h3>Neuer Stundenzettel-Eintrag</h3>
+            <form id="entryForm" onsubmit="saveEntry(event)">
+                <div class="row">
+                    <div class="form-group">
+                        <label>Kunde:</label>
+                        <input type="text" id="kunde" placeholder="Kunde" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ort:</label>
+                        <input type="text" id="ort" placeholder="Ort" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tätigkeit:</label>
+                    <textarea id="taetigkeit" placeholder="Tätigkeit..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Fotos:</label>
+                    <input type="file" id="taetigkeitFotos" accept="image/*" multiple onchange="handleImageUpload(event)">
+                    <div id="photoPreview" class="image-preview-container"></div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Dauer (Stunden):</label>
+                        <select id="zeit" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Datum:</label>
+                        <input type="date" id="datum" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Unterschrift:</label>
+                    <div id="sigContainer" class="signature-pad-container">
+                        <canvas id="signaturePad" class="signature-pad"></canvas>
+                    </div>
+                    <div class="sig-btn-row">
+                        <button type="button" class="btn-danger" onclick="clearSignature()">Löschen</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 15px;">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GALERIE TAB -->
+    <div id="tab-galerie" class="tab-content">
+        <div class="card">
+            <h3>🖼️ Galerie</h3>
+            <div id="galleryContainer" class="gallery-grid"></div>
+        </div>
+    </div>
+
+    <!-- BERICHTE TAB -->
+    <div id="tab-berichte" class="tab-content">
+        <div class="card">
+            <h3>Berichte</h3>
+            <p><strong>Mitarbeiter:</strong> <span id="reportMonteur">-</span></p>
+            <p><strong>Gesamtstunden:</strong> <span id="reportTotalHours" class="badge">0,00 Std.</span></p>
+            <div id="reportList">Lade Berichte...</div>
+        </div>
+    </div>
+
+    <!-- BÜRO TAB -->
+    <div id="tab-buero" class="tab-content buero-only">
+        <div class="card" style="text-align: center;">
+            <h3>🏢 Büro Steuerung</h3>
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="openModal('modalAuftrag')">
+                    <span class="icon">📝</span>
+                    <span>Neuen Auftrag</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalMonteurErnennen')">
+                    <span class="icon">👥</span>
+                    <span>Monteur ernennen</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = "https://uelqwtaqyyjfdrziktej.supabase.co";    
     const SUPABASE_ANON_KEY ="sb_publishable_mu_a2qtG3AYaq9uTuNjVqQ_v-TvCDT6";
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
