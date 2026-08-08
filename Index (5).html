@@ -72,6 +72,747 @@
 
         .splash-loader { width: 160px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
 
+        .loader-bar { width: 0%; height: 100%; background: #e67e22; border-radius: 4px; animation: loadingProgress 2s ease-in-out forwards; }
+
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
+        @keyframes loadingProgress { 0% { width: 0%; } 100% { width: 100%; } }
+
+        /* --- AUTH & MODALS --- */
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 9000;
+        }
+
+        .auth-card {
+            background: #fff; width: 90%; max-width: 400px; padding: 25px;
+            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+        }
+
+        .auth-choice-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .auth-choice-btns button { padding: 14px; font-weight: bold; font-size: 1.05em; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 8500;
+            padding: 15px; box-sizing: border-box;
+        }
+        .modal-box {
+            background: #fff; width: 100%; max-width: 550px; max-height: 90vh;
+            overflow-y: auto; padding: 20px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 15px; right: 15px; background: #eee;
+            border: none; border-radius: 50%; width: 32px; height: 32px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 850px; margin: 0 auto; background: var(--bg-overlay);
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .logo-header { text-align: center; margin-bottom: 15px; min-height: 20px; }
+        .logo-preview { max-width: 250px; max-height: 110px; display: block; margin: 0 auto 10px auto; object-fit: contain; }
+
+        h1, h2, h3 { color: var(--primary-color); margin-top: 0; }
+
+        .card {
+            background: var(--card-bg); padding: 15px; border-radius: 8px;
+            margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .input-row { display: flex; align-items: center; gap: 5px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+
+        input, select, textarea, button {
+            width: 100%; padding: 10px; border: 1px solid #ccc;
+            border-radius: 6px; box-sizing: border-box; font-size: 1em;
+            background-color: #fff;
+        }
+
+        textarea { resize: vertical; height: 70px; }
+        .row { display: flex; gap: 10px; }
+        .row .form-group { flex: 1; }
+
+        button.btn-primary { background-color: var(--accent-color); color: white; border: none; font-weight: bold; cursor: pointer; }
+        button.btn-secondary { background-color: var(--primary-color); color: white; border: none; cursor: pointer; }
+        button.btn-danger { background-color: var(--danger-color); color: white; border: none; cursor: pointer; }
+        button.btn-success { background-color: var(--success-color); color: white; border: none; cursor: pointer; font-weight: bold; }
+
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { background: #eee; border: none; padding: 10px 12px; cursor: pointer; border-radius: 6px; font-weight: bold; flex: 1; min-width: 80px; }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
+        .dash-card {
+            background: #fff; border: 2px solid var(--primary-color); border-radius: 10px;
+            padding: 20px 10px; text-align: center; cursor: pointer; transition: transform 0.2s, background 0.2s;
+        }
+        .dash-card:hover { transform: translateY(-3px); background: #f0f4f8; }
+        .dash-card .icon { font-size: 2em; display: block; margin-bottom: 8px; }
+        .dash-card span { font-weight: bold; color: var(--primary-color); }
+
+        .image-preview-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .image-preview { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+
+        .entry-item { background: #fff; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+        .entry-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
+        .entry-actions { margin-top: 10px; display: flex; gap: 10px; }
+        .entry-actions button { padding: 6px 12px; font-size: 0.85em; width: auto; }
+        .badge { background: #eef2f5; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
+        .gallery-item { background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #ddd; }
+        .gallery-item img { width: 100%; height: 100px; object-fit: cover; display: block; }
+        .gallery-caption { padding: 5px; font-size: 0.75em; color: #555; background: #fafafa; }
+
+        .signature-pad-container { border: 2px dashed #999; background: #fdfdfd; border-radius: 6px; position: relative; margin-top: 5px; }
+        canvas.signature-pad { width: 100%; height: 120px; display: block; touch-action: none; cursor: crosshair; }
+        .sig-btn-row { display: flex; gap: 10px; margin-top: 8px; }
+        .sig-btn-row button { padding: 6px 10px; font-size: 0.85em; }
+
+        .buero-only { display: none !important; }
+        @media (max-width: 600px) { .row { flex-direction: column; gap: 0; } }
+    </style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-screen">
+    <div class="splash-content">
+        <div class="splash-logo">
+            <span class="icon">⏱️</span>
+            <div class="pulse-ring"></div>
+        </div>
+        <h1 class="splash-title">TimeHero</h1>
+        <p class="splash-subtitle">Zeiterfassung & Büro</p>
+        <div class="splash-loader"><div class="loader-bar"></div></div>
+    </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="auth-overlay" style="display:none;">
+    <div id="stepChoice" class="auth-card">
+        <h2>Bereich auswählen</h2>
+        <p>Modus wählen:</p>
+        <div class="auth-choice-btns">
+            <button class="btn-primary" onclick="showAuthForm('buero')">🏢 Büro Modus</button>
+            <button class="btn-secondary" onclick="showAuthForm('monteur')">🛠️ Monteur Modus</button>
+        </div>
+    </div>
+
+    <div id="stepBuero" class="auth-card" style="display:none;">
+        <h2>🏢 Büro Access</h2>
+        <div class="form-group">
+            <label>E-Mail Adresse:</label>
+            <input type="email" id="bueroEmail" placeholder="name@firma.de">
+        </div>
+        <div class="form-group">
+            <label>Freischaltcode:</label>
+            <input type="password" id="bueroCode" placeholder="Code eingeben">
+        </div>
+        <button class="btn-primary" onclick="loginBuero()">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+
+    <div id="stepMonteur" class="auth-card" style="display:none;">
+        <h2>🛠️ Monteur Login</h2>
+        <div class="form-group">
+            <label>Name / Benutzername:</label>
+            <input type="text" id="monteurUser" placeholder="Dein Name">
+        </div>
+        <div class="form-group">
+            <label>Passwort:</label>
+            <input type="password" id="monteurPassword" placeholder="Dein Passwort">
+        </div>
+        <button class="btn-primary" onclick="loginMonteur()">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+</div>
+
+<!-- MODAL: NEUER AUFTRAG -->
+<div id="modalAuftrag" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalAuftrag')">✕</button>
+        <h3>📝 Neuen Auftrag erstellen</h3>
+        <form id="auftragForm" onsubmit="saveAuftrag(event)">
+            <div class="row">
+                <div class="form-group">
+                    <label>Kunde:</label>
+                    <input type="text" id="auftragKunde" placeholder="Kundenname" required>
+                </div>
+                <div class="form-group">
+                    <label>Ort:</label>
+                    <input type="text" id="auftragOrt" placeholder="Ort" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung:</label>
+                <textarea id="auftragBeschreibung" placeholder="Aufgaben..." required></textarea>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Monteur Name:</label>
+                    <input type="text" id="auftragMonteurName" placeholder="z. B. Max" required>
+                </div>
+                <div class="form-group">
+                    <label>Datum:</label>
+                    <input type="date" id="auftragTermin" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px;">Auftrag speichern</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: MONTEUR ERNENNEN (BÜRO) -->
+<div id="modalMonteurErnennen" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modalMonteurErnennen')">✕</button>
+        <h3>🛠️ Monteur ernennen & Passwort vergeben</h3>
+        <form id="ernennenForm" onsubmit="saveMonteurCredential(event)">
+            <div class="form-group">
+                <label>Monteur Name:</label>
+                <input type="text" id="newMonteurName" placeholder="Exakter Name des Monteurs" required>
+            </div>
+            <div class="form-group">
+                <label>Passwort vergeben:</label>
+                <input type="password" id="newMonteurPass" placeholder="Sicheres Passwort" required>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px;">Speichern & Freigeben</button>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+    <div class="logo-header">
+        <img id="appLogo" class="logo-preview" src="" alt="Firmenlogo" style="display:none;">
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('home', event)">🏠 Start</button>
+        <button class="tab-btn" onclick="switchTab('auftraege', event)">📋 Aufträge</button>
+        <button class="tab-btn" onclick="switchTab('erfassung', event)">✏️ Eingabe</button>
+        <button class="tab-btn" onclick="switchTab('galerie', event)">🖼️ Galerie</button>
+        <button class="tab-btn" onclick="switchTab('berichte', event)">📄 Berichte</button>
+        <button class="tab-btn buero-only" id="tabBtnBuero" onclick="switchTab('buero', event)">🏢 Büro</button>
+    </div>
+
+    <!-- START TAB -->
+    <div id="tab-home" class="tab-content active">
+        <div class="card" style="text-align: center;">
+            <h2>📋 Übersicht</h2>
+            <p>Eingeloggt als: <strong id="currentUserDisplay">-</strong> (<span id="currentRoleDisplay">-</span>)</p>
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="switchTab('auftraege')"><span class="icon">📋</span><span>Aufträge</span></div>
+                <div class="dash-card" onclick="switchTab('erfassung')"><span class="icon">✏️</span><span>Stunden</span></div>
+                <div class="dash-card" onclick="switchTab('galerie')"><span class="icon">🖼️</span><span>Galerie</span></div>
+                <div class="dash-card" onclick="switchTab('berichte')"><span class="icon">📄</span><span>Berichte</span></div>
+                <div class="dash-card buero-only" onclick="switchTab('buero')"><span class="icon">🏢</span><span>Büro</span></div>
+            </div>
+            <br>
+            <button class="btn-danger" style="width:auto; padding: 8px 15px;" onclick="logout()">🔒 Abmelden</button>
+        </div>
+    </div>
+
+    <!-- AUFTRÄGE TAB -->
+    <div id="tab-auftraege" class="tab-content">
+        <div class="card">
+            <h3>📋 Aufträge</h3>
+            <div id="auftraegeList">Lade Aufträge...</div>
+        </div>
+    </div>
+
+    <!-- ERFASSUNG TAB -->
+    <div id="tab-erfassung" class="tab-content">
+        <div class="card">
+            <h3>Neuer Stundenzettel-Eintrag</h3>
+            <form id="entryForm" onsubmit="saveEntry(event)">
+                <div class="row">
+                    <div class="form-group">
+                        <label>Kunde:</label>
+                        <input type="text" id="kunde" placeholder="Kunde" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ort:</label>
+                        <input type="text" id="ort" placeholder="Ort" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tätigkeit:</label>
+                    <textarea id="taetigkeit" placeholder="Tätigkeit..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Fotos:</label>
+                    <input type="file" id="taetigkeitFotos" accept="image/*" multiple onchange="handleImageUpload(event)">
+                    <div id="photoPreview" class="image-preview-container"></div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Dauer (Stunden):</label>
+                        <select id="zeit" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Datum:</label>
+                        <input type="date" id="datum" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Unterschrift:</label>
+                    <div id="sigContainer" class="signature-pad-container">
+                        <canvas id="signaturePad" class="signature-pad"></canvas>
+                    </div>
+                    <div class="sig-btn-row">
+                        <button type="button" class="btn-danger" onclick="clearSignature()">Löschen</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 15px;">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GALERIE TAB -->
+    <div id="tab-galerie" class="tab-content">
+        <div class="card">
+            <h3>🖼️ Galerie</h3>
+            <div id="galleryContainer" class="gallery-grid"></div>
+        </div>
+    </div>
+
+    <!-- BERICHTE TAB -->
+    <div id="tab-berichte" class="tab-content">
+        <div class="card">
+            <h3>Berichte</h3>
+            <p><strong>Mitarbeiter:</strong> <span id="reportMonteur">-</span></p>
+            <p><strong>Gesamtstunden:</strong> <span id="reportTotalHours" class="badge">0,00 Std.</span></p>
+            <div id="reportList">Lade Berichte...</div>
+        </div>
+    </div>
+
+    <!-- BÜRO TAB -->
+    <div id="tab-buero" class="tab-content buero-only">
+        <div class="card" style="text-align: center;">
+            <h3>🏢 Büro Steuerung</h3>
+            <div class="dashboard-grid">
+                <div class="dash-card" onclick="openModal('modalAuftrag')">
+                    <span class="icon">📝</span>
+                    <span>Neuen Auftrag</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalMonteurErnennen')">
+                    <span class="icon">👥</span>
+                    <span>Monteur ernennen</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = "https://uelqwtaqyyjfdrziktej.supabase.co";       
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbHF3dGFxeXlqZmRyemlrdGVqIiwicm9sZSI6InVub24iLCJpYXQiOjE3ODYxODUwNDMsImV4cCI6MjEwMTc2MTA0M30.uwIM5MqWI7iKOaPFfVyx_RhmKDqBuptvsa5LKSe1FPY";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const BUERO_ADMIN_CODE = "BUERO2026";
+
+    let activeSession = JSON.parse(localStorage.getItem('timehero_session')) || null;
+    let currentPhotos = [];
+    let currentSignature = '';
+    let canvas, ctx, isDrawing = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) splash.classList.add('fade-out');
+            checkAuth();
+        }, 1500);
+
+        document.getElementById('datum').valueAsDate = new Date();
+        document.getElementById('auftragTermin').valueAsDate = new Date();
+        initHoursDropdown();
+        initSignaturePad();
+    });
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function initHoursDropdown() {
+        const selectStunden = document.getElementById('zeit');
+        if (!selectStunden) return;
+        selectStunden.innerHTML = '';
+        for (let i = 0.25; i <= 24; i += 0.25) {
+            const option = document.createElement('option');
+            option.value = i.toFixed(2);
+            option.textContent = `${i.toFixed(2).replace('.', ',')} Std`;
+            if (i === 1.0) option.selected = true;
+            selectStunden.appendChild(option);
+        }
+    }
+
+    function initSignaturePad() {
+        canvas = document.getElementById('signaturePad');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width || 300; 
+        canvas.height = rect.height || 120;
+        
+        ctx.lineWidth = 2; 
+        ctx.lineCap = 'round'; 
+        ctx.strokeStyle = '#000';
+
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { 
+                x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, 
+                y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top 
+            };
+        }
+
+        function start(e) { 
+            isDrawing = true; 
+            const p = getPos(e); 
+            ctx.beginPath(); 
+            ctx.moveTo(p.x, p.y); 
+            if(e.touches) e.preventDefault(); 
+        }
+
+        function draw(e) { 
+            if(!isDrawing) return; 
+            const p = getPos(e); 
+            ctx.lineTo(p.x, p.y); 
+            ctx.stroke(); 
+            if(e.touches) e.preventDefault(); 
+        }
+
+        function stop() { 
+            if(isDrawing) { 
+                isDrawing = false; 
+                currentSignature = canvas.toDataURL('image/png'); 
+            } 
+        }
+
+        canvas.addEventListener('mousedown', start); 
+        canvas.addEventListener('mousemove', draw); 
+        canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('touchstart', start, {passive: false}); 
+        canvas.addEventListener('touchmove', draw, {passive: false}); 
+        canvas.addEventListener('touchend', stop);
+    }
+
+    function clearSignature() {
+        if(!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        currentSignature = '';
+    }
+
+    function checkAuth() {
+        if (!activeSession) {
+            document.getElementById('authModal').style.display = 'flex';
+            resetAuthView();
+        } else {
+            document.getElementById('authModal').style.display = 'none';
+            applySessionRole();
+        }
+    }
+
+    function showAuthForm(type) {
+        document.getElementById('stepChoice').style.display = 'none';
+        document.getElementById(type === 'buero' ? 'stepBuero' : 'stepMonteur').style.display = 'block';
+    }
+
+    function resetAuthView() {
+        document.getElementById('stepChoice').style.display = 'block';
+        document.getElementById('stepBuero').style.display = 'none';
+        document.getElementById('stepMonteur').style.display = 'none';
+    }
+
+    function loginBuero() {
+        if(document.getElementById('bueroCode').value.trim() !== BUERO_ADMIN_CODE) { 
+            alert('Falscher Code'); 
+            return; 
+        }
+        activeSession = { role: 'buero', user: document.getElementById('bueroEmail').value };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    async function loginMonteur() {
+        const user = document.getElementById('monteurUser').value.trim();
+        const pass = document.getElementById('monteurPassword').value.trim();
+
+        if(!user || !pass) { 
+            alert('Bitte Name und Passwort eingeben.'); 
+            return; 
+        }
+
+        // Überprüfen in der Datenbank, ob der Monteur ernannt wurde und das Passwort stimmt
+        const { data, error } = await supabaseClient
+            .from('monteurs')
+            .select('*')
+            .eq('name', user)
+            .eq('password', pass)
+            .single();
+
+        if (error || !data) {
+            alert('Zugriff verweigert! Entweder existiert kein Monteur mit diesem Namen, das Passwort ist falsch oder du wurdest noch nicht vom Büro ernannt.');
+            return;
+        }
+
+        activeSession = { role: 'monteur', user: user };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    function applySessionRole() {
+        document.getElementById('currentUserDisplay').textContent = activeSession.user;
+        document.getElementById('currentRoleDisplay').textContent = activeSession.role === 'buero' ? 'Büro' : 'Monteur';
+        document.querySelectorAll('.buero-only').forEach(el => {
+            el.style.setProperty('display', activeSession.role === 'buero' ? 'block' : 'none', 'important');
+        });
+        loadDataFromServer();
+    }
+
+    function logout() {
+        localStorage.removeItem('timehero_session');
+        activeSession = null;
+        checkAuth();
+    }
+
+    // --- DATENBANK OPERATIONEN ---
+    async function saveAuftrag(e) {
+        e.preventDefault();
+        const auftrag = {
+            kunde: document.getElementById('auftragKunde').value,
+            ort: document.getElementById('auftragOrt').value,
+            beschreibung: document.getElementById('auftragBeschreibung').value,
+            monteur: document.getElementById('auftragMonteurName').value,
+            termin: document.getElementById('auftragTermin').value,
+            status: 'offen'
+        };
+
+        const { error } = await supabaseClient.from('auftraege').insert([auftrag]);
+        if(error) { 
+            alert('Fehler beim Speichern des Auftrags: ' + error.message); 
+            return; 
+        }
+
+        alert('Auftrag erfolgreich gespeichert!');
+        document.getElementById('auftragForm').reset();
+        closeModal('modalAuftrag');
+        loadDataFromServer();
+    }
+
+    async function saveMonteurCredential(e) {
+        e.preventDefault();
+        const name = document.getElementById('newMonteurName').value.trim();
+        const password = document.getElementById('newMonteurPass').value.trim();
+
+        // Upsert, damit ein Monteur aktualisiert oder neu angelegt werden kann
+        const { error } = await supabaseClient
+            .from('monteurs')
+            .upsert([{ name, password }], { onConflict: ['name'] });
+
+        if(error) {
+            alert('Fehler beim Speichern des Monteurs: ' + error.message);
+            return;
+        }
+
+        alert(`Monteur "${name}" erfolgreich ernannt und Passwort vergeben!`);
+        document.getElementById('ernennenForm').reset();
+        closeModal('modalMonteurErnennen');
+    }
+
+    async function saveEntry(e) {
+        e.preventDefault();
+        const entry = {
+            monteur: activeSession.user,
+            kunde: document.getElementById('kunde').value,
+            ort: document.getElementById('ort').value,
+            taetigkeit: document.getElementById('taetigkeit').value,
+            zeit: parseFloat(document.getElementById('zeit').value),
+            datum: document.getElementById('datum').value,
+            fotos: currentPhotos,
+            unterschrift: currentSignature
+        };
+
+        const { error } = await supabaseClient.from('eintraege').insert([entry]);
+        if(error) { 
+            alert('Fehler beim Speichern des Eintrags: ' + error.message); 
+            return; 
+        }
+
+        alert('Stundenzettel erfolgreich gespeichert!');
+        document.getElementById('entryForm').reset();
+        currentPhotos = []; 
+        clearSignature();
+        loadDataFromServer();
+    }
+
+    async function loadDataFromServer() {
+        try {
+            let query = supabaseClient.from('auftraege').select('*');
+            if (activeSession && activeSession.role === 'monteur') {
+                query = query.eq('monteur', activeSession.user);
+            }
+            const { data: auftraegeData, err1 } = await query;
+            if(!err1) renderAuftraege(auftraegeData || []);
+
+            const { data: eintraegeData, err2 } = await supabaseClient.from('eintraege').select('*');
+            if(!err2) {
+                renderBerichte(eintraegeData || []);
+                renderGalerie(eintraegeData || []);
+            }
+        } catch(err) {
+            console.error("Ladefehler:", err);
+        }
+    }
+
+    function renderAuftraege(data) {
+        const container = document.getElementById('auftraegeList');
+        if(!container) return;
+        if(data.length === 0) { 
+            container.innerHTML = '<p style="color:#777;">Keine Aufträge vorhanden.</p>'; 
+            return; 
+        }
+        
+        container.innerHTML = data.map(a => `
+            <div class="entry-item">
+                <strong>${escapeHtml(a.kunde)}</strong> (${escapeHtml(a.ort)}) - 🛠️ ${escapeHtml(a.monteur)}<br>
+                <small>📅 ${a.termin} | Status: ${a.status}</small>
+                <div>${escapeHtml(a.beschreibung)}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderBerichte(data) {
+        const container = document.getElementById('reportList');
+        if(!container) return;
+        const total = data.reduce((acc, curr) => acc + Number(curr.zeit || 0), 0);
+        document.getElementById('reportTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        document.getElementById('reportMonteur').textContent = activeSession ? activeSession.user : '-';
+
+        if(data.length === 0) {
+            container.innerHTML = '<p style="color:#777;">Keine Berichte vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = data.map(e => `
+            <div class="entry-item">
+                <strong>${escapeHtml(e.kunde)}</strong> (${escapeHtml(e.ort)}) - ⏱️ ${e.zeit} Std.<br>
+                <div>${escapeHtml(e.taetigkeit)}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderGalerie(data) {
+        const container = document.getElementById('galleryContainer');
+        if(!container) return;
+        let allPhotos = [];
+        data.forEach(item => {
+            if (item.fotos && Array.isArray(item.fotos)) {
+                item.fotos.forEach(photo => {
+                    allPhotos.push({ src: photo, kunde: item.kunde, datum: item.datum });
+                });
+            }
+        });
+
+        if(allPhotos.length === 0) {
+            container.innerHTML = '<p style="color:#777;">Keine Bilder vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = allPhotos.map(p => `
+            <div class="gallery-item">
+                <img src="${p.src}" alt="Foto">
+                <div class="gallery-caption">${escapeHtml(p.kunde)}<br>${p.datum}</div>
+            </div>
+        `).join('');
+    }
+
+    function handleImageUpload(e) {
+        Array.from(e.target.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = ev => { 
+                currentPhotos.push(ev.target.result); 
+                renderPhotos(); 
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderPhotos() {
+        document.getElementById('photoPreview').innerHTML = currentPhotos.map(p => `<img src="${p}" class="image-preview">`).join('');
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        const targetTab = document.getElementById(`tab-${name}`);
+        if(targetTab) targetTab.classList.add('active');
+
+        const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(name));
+        if(activeBtn) activeBtn.classList.add('active');
+    }
+
+    function escapeHtml(text) {
+        return text ? text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : '';
+    }
+</script>
+
+</body>
+</html>            display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            color: #ffffff; text-align: center;
+        }
+
+        #splash-screen.fade-out { opacity: 0; visibility: hidden; }
+
+        .splash-content {
+            display: flex; flex-direction: column; align-items: center;
+            animation: zoomIn 0.6s ease-out; padding: 0 20px;
+        }
+
+        .splash-logo {
+            position: relative; width: 90px; height: 90px;
+            background: rgba(255, 255, 255, 0.05); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 20px; border: 2px solid rgba(230, 126, 34, 0.5);
+            box-shadow: 0 0 25px rgba(230, 126, 34, 0.3);
+        }
+
+        .splash-logo .icon { font-size: 2.8em; animation: float 2s infinite ease-in-out; }
+
+        .pulse-ring {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            border: 2px solid #e67e22; animation: pulse 2s infinite;
+        }
+
+        .splash-title {
+            font-size: 2em; font-weight: 700; margin: 0;
+            background: linear-gradient(45deg, #ffffff, #e67e22);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .splash-subtitle { font-size: 1.1em; color: #94a3b8; margin: 10px 0 25px 0; font-weight: 400; letter-spacing: 0.5px; }
+
+        .splash-loader { width: 160px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+
         .loader-bar { width: 0%; height: 100%; background: #e67e22; border-radius: 4px; animation: loadingProgress 3s ease-in-out forwards; }
 
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
