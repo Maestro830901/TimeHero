@@ -12,330 +12,282 @@
 
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --accent-color: #e67e22;
-            --danger-color: #c0392b;
-            --success-color: #27ae60;
-            --bg-overlay: rgba(255, 255, 255, 0.95);
+            --primary-color: #1e293b;
+            --primary-light: #334155;
+            --accent-color: #f59e0b;
+            --accent-hover: #d97706;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --bg-overlay: rgba(255, 255, 255, 0.97);
             --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            padding: 15px;
+            padding: 20px;
             background-image: url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1350&q=80');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            color: #333;
+            color: var(--text-main);
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
         }
+
+        *, *:before, *:after { box-sizing: inherit; }
 
         /* --- SPLASH SCREEN --- */
         #splash-screen {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             display: flex; justify-content: center; align-items: center;
             z-index: 9999;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
             color: #ffffff; text-align: center;
         }
-
         #splash-screen.fade-out { opacity: 0; visibility: hidden; }
 
         .splash-content {
             display: flex; flex-direction: column; align-items: center;
-            animation: zoomIn 0.6s ease-out; padding: 0 20px;
+            animation: zoomIn 0.5s ease-out; padding: 0 20px;
         }
 
         .splash-logo {
-            position: relative; width: 90px; height: 90px;
+            position: relative; width: 100px; height: 100px;
             background: rgba(255, 255, 255, 0.05); border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            margin-bottom: 20px; border: 2px solid rgba(230, 126, 34, 0.5);
-            box-shadow: 0 0 25px rgba(230, 126, 34, 0.3);
+            margin-bottom: 20px; border: 2px solid rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
         }
-
-        .splash-logo .icon { font-size: 2.8em; animation: float 2s infinite ease-in-out; }
+        .splash-logo .icon { font-size: 3em; animation: float 2s infinite ease-in-out; }
 
         .pulse-ring {
             position: absolute; width: 100%; height: 100%; border-radius: 50%;
-            border: 2px solid #e67e22; animation: pulse 2s infinite;
+            border: 2px solid var(--accent-color); animation: pulse 2s infinite;
         }
 
         .splash-title {
-            font-size: 2em; font-weight: 700; margin: 0;
-            background: linear-gradient(45deg, #ffffff, #e67e22);
+            font-size: 2.2em; font-weight: 800; margin: 0;
+            background: linear-gradient(45deg, #ffffff, #f59e0b);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        .splash-subtitle { font-size: 1.1em; color: #94a3b8; margin: 10px 0 25px 0; font-weight: 400; letter-spacing: 0.5px; }
+        .splash-subtitle { font-size: 1.1em; color: var(--text-muted); margin: 8px 0 25px 0; font-weight: 400; letter-spacing: 0.5px; }
+        .splash-loader { width: 180px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+        .loader-bar { width: 0%; height: 100%; background: var(--accent-color); border-radius: 4px; animation: loadingProgress 1.5s ease-in-out forwards; }
 
-        .splash-loader { width: 160px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
-
-        .loader-bar { width: 0%; height: 100%; background: #e67e22; border-radius: 4px; animation: loadingProgress 2s ease-in-out forwards; }
-
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
         @keyframes loadingProgress { 0% { width: 0%; } 100% { width: 100%; } }
 
         /* --- AUTH & MODALS --- */
         .auth-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
             display: flex; justify-content: center; align-items: center; z-index: 9000;
+            padding: 15px;
         }
 
         .auth-card {
-            background: #fff; width: 90%; max-width: 400px; padding: 25px;
-            border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+            background: #fff; width: 100%; max-width: 420px; padding: 30px;
+            border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
         }
 
         .auth-choice-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        .auth-choice-btns button { padding: 14px; font-weight: bold; font-size: 1.05em; }
+        .auth-choice-btns button { padding: 14px; font-weight: 600; font-size: 1em; border-radius: 8px; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px);
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px);
             display: none; justify-content: center; align-items: center; z-index: 8500;
             padding: 15px; box-sizing: border-box;
         }
         .modal-box {
-            background: #fff; width: 100%; max-width: 550px; max-height: 90vh;
-            overflow-y: auto; padding: 20px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative;
+            background: #fff; width: 100%; max-width: 650px; max-height: 90vh;
+            overflow-y: auto; padding: 25px; border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative;
+            word-break: break-word;
+        }
+        .modal-header-actions {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;
         }
         .modal-close {
-            position: absolute; top: 15px; right: 15px; background: #eee;
-            border: none; border-radius: 50%; width: 32px; height: 32px;
+            background: #f1f5f9; border: none; border-radius: 50%; width: 36px; height: 36px;
             font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); transition: background 0.2s; flex-shrink: 0;
         }
+        .modal-close:hover { background: #e2e8f0; color: var(--text-main); }
 
         /* --- NOTIFICATION BANNER --- */
         #notificationBanner {
-            background: #e74c3c; color: white; padding: 12px 20px; border-radius: 8px;
+            background: var(--danger-color); color: white; padding: 14px 20px; border-radius: 10px;
             margin-bottom: 20px; display: none; align-items: center; justify-content: space-between;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); animation: pulseAlert 1.5s infinite;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); font-weight: 500;
         }
-        @keyframes pulseAlert { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        /* --- MULTI-SELECT CHECKBOXES FOR MONTEURE --- */
         .monteur-checkbox-group {
-            border: 1px solid #ccc; border-radius: 6px; padding: 10px; max-height: 140px; overflow-y: auto; background: #fff; text-align: left;
+            border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; max-height: 150px; overflow-y: auto; background: #f8fafc; text-align: left;
         }
         .monteur-checkbox-label {
-            display: flex; align-items: center; gap: 8px; font-weight: normal; margin-bottom: 6px; font-size: 0.95em; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; font-weight: normal; margin-bottom: 8px; font-size: 0.95em; cursor: pointer;
         }
-        .monteur-checkbox-label input { width: auto; margin: 0; }
+        .monteur-checkbox-label input { width: auto; margin: 0; accent-color: var(--accent-color); }
+
+        .scrollable-folder {
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8fafc;
+        }
 
         /* --- LAYOUT --- */
         .container {
-            max-width: 850px; margin: 0 auto; background: var(--bg-overlay);
-            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            backdrop-filter: blur(5px);
+            max-width: 900px; margin: 0 auto; background: var(--bg-overlay);
+            padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
 
-        .logo-header { text-align: center; margin-bottom: 15px; min-height: 20px; }
-        .logo-preview { max-width: 250px; max-height: 110px; display: block; margin: 0 auto 10px auto; object-fit: contain; }
+        .logo-header { text-align: center; margin-bottom: 20px; min-height: 20px; }
+        .logo-preview { max-width: 220px; max-height: 90px; display: block; margin: 0 auto 10px auto; object-fit: contain; }
 
-        h1, h2, h3 { color: var(--primary-color); margin-top: 0; }
+        h1, h2, h3, h4 { color: var(--primary-color); margin-top: 0; font-weight: 700; }
 
         .card {
-            background: var(--card-bg); padding: 15px; border-radius: 8px;
-            margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: var(--card-bg); padding: 20px; border-radius: 12px;
+            margin-bottom: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             border-left: 4px solid var(--accent-color);
+            word-break: break-word;
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .form-group { margin-bottom: 12px; text-align: left; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--primary-light); }
 
         input, select, textarea, button {
-            width: 100%; padding: 10px; border: 1px solid #ccc;
-            border-radius: 6px; box-sizing: border-box; font-size: 1em;
-            background-color: #fff;
+            width: 100%; padding: 11px 14px; border: 1px solid var(--border-color);
+            border-radius: 8px; box-sizing: border-box; font-size: 0.95em;
+            background-color: #fff; color: var(--text-main);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
         }
 
-        textarea { resize: vertical; height: 70px; }
-        .row { display: flex; gap: 10px; }
+        textarea { resize: vertical; height: 80px; }
+        .row { display: flex; gap: 15px; }
         .row .form-group { flex: 1; }
 
-        button.btn-primary { background-color: var(--accent-color); color: white; border: none; font-weight: bold; cursor: pointer; }
-        button.btn-secondary { background-color: var(--primary-color); color: white; border: none; cursor: pointer; }
-        button.btn-danger { background-color: var(--danger-color); color: white; border: none; cursor: pointer; }
-        button.btn-success { background-color: var(--success-color); color: white; border: none; cursor: pointer; font-weight: bold; }
+        button { cursor: pointer; font-weight: 600; border-radius: 8px; transition: background 0.2s, transform 0.1s; }
+        button:active { transform: scale(0.98); }
 
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
-        .tab-btn { background: #eee; border: none; padding: 10px 12px; cursor: pointer; border-radius: 6px; font-weight: bold; flex: 1; min-width: 80px; }
-        .tab-btn.active { background: var(--primary-color); color: white; }
+        button.btn-primary { background-color: var(--accent-color); color: white; border: none; }
+        button.btn-primary:hover { background-color: var(--accent-hover); }
+
+        button.btn-secondary { background-color: var(--primary-color); color: white; border: none; }
+        button.btn-secondary:hover { background-color: var(--primary-light); }
+
+        button.btn-danger { background-color: var(--danger-color); color: white; border: none; }
+        button.btn-danger:hover { background-color: #dc2626; }
+
+        button.btn-success { background-color: var(--success-color); color: white; border: none; }
+        button.btn-success:hover { background-color: #059669; }
+
+        .tabs { 
+            display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; 
+            -webkit-overflow-scrolling: touch; padding-bottom: 6px; 
+        }
+        .tab-btn { 
+            background: #f1f5f9; border: 1px solid var(--border-color); padding: 10px 16px; 
+            cursor: pointer; border-radius: 8px; font-weight: 600; flex-shrink: 0; font-size: 0.9em; 
+            color: var(--text-muted); transition: all 0.2s;
+        }
+        .tab-btn:hover { background: #e2e8f0; color: var(--text-main); }
+        .tab-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
         
         .btn-monatsbericht {
-            background: #8e44ad; color: white; border: none; padding: 10px 12px; cursor: pointer; border-radius: 6px; font-weight: bold; flex: 1; min-width: 110px; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; padding: 14px; cursor: pointer; border-radius: 10px; font-weight: 600; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.05em; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
         }
-        .btn-monatsbericht:hover { background: #732d91; }
+        .btn-monatsbericht:hover { opacity: 0.95; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
-        .dash-card {
-            background: #fff; border: 2px solid var(--primary-color); border-radius: 10px;
-            padding: 20px 10px; text-align: center; cursor: pointer; transition: transform 0.2s, background 0.2s;
+        .dashboard-grid-buero { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; 
         }
-        .dash-card:hover { transform: translateY(-3px); background: #f0f4f8; }
-        .dash-card .icon { font-size: 2em; display: block; margin-bottom: 8px; }
-        .dash-card span { font-weight: bold; color: var(--primary-color); }
+        @media (max-width: 768px) {
+            .dashboard-grid-buero { grid-template-columns: repeat(2, 1fr); }
+        }
 
-        .image-preview-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-        .image-preview { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
+        .dash-card {
+            background: #fff; border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 22px 12px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .dash-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: var(--accent-color); }
+        .dash-card .icon { font-size: 2.2em; display: block; margin-bottom: 10px; }
+        .dash-card span { font-weight: 600; color: var(--primary-color); font-size: 0.95em; }
 
-        .entry-item { background: #fff; border: 1px solid #e0e0e0; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
-        .badge { background: #eef2f5; padding: 3px 8px; border-radius: 4px; font-size: 0.85em; }
+        .image-preview-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .image-preview { width: 75px; height: 75px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; }
 
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
-        .gallery-item { background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #ddd; }
-        .gallery-item img { width: 100%; height: 100px; object-fit: cover; display: block; }
-        .gallery-caption { padding: 5px; font-size: 0.75em; color: #555; background: #fafafa; }
+        .entry-item { background: #fff; border: 1px solid var(--border-color); padding: 14px; border-radius: 8px; margin-bottom: 12px; word-break: break-word; }
+        .badge { background: #f1f5f9; color: var(--text-muted); padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 600; }
 
-        .monteur-folder { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
-        .monteur-folder-header { background: #e2e8f0; padding: 12px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: var(--primary-color); }
-        .monteur-folder-header:hover { background: #cbd5e1; }
-        .monteur-folder-content { padding: 12px; display: none; background: #fff; }
-        .monteur-folder-content.open { display: block; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-top: 15px; }
+        .gallery-item { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative; }
+        .gallery-item img { width: 100%; height: 110px; object-fit: cover; display: block; cursor: pointer; }
+        .gallery-caption { padding: 6px; font-size: 0.8em; color: var(--text-muted); background: #f8fafc; }
 
-        .sub-folder-month { background: #f1f5f9; border: 1px solid #94a3b8; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
-        .sub-folder-month-header { background: #cbd5e1; padding: 10px 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #1e293b; font-size: 0.95em; }
-        
-        .sub-folder-week { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; margin: 8px; overflow: hidden; }
-        .sub-folder-week-header { background: #e2e8f0; padding: 8px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #334155; font-size: 0.9em; }
-
-        .sub-folder-day { background: #fdfdfd; border: 1px solid #e2e8f0; border-radius: 6px; margin: 8px; overflow: hidden; }
-        .sub-folder-day-header { background: #f8fafc; padding: 6px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #475569; font-size: 0.85em; }
-
-        .sub-folder-content { padding: 10px; display: none; }
-        .sub-folder-content.open { display: block; }
-
-        .signature-pad-container { border: 2px dashed #999; background: #fdfdfd; border-radius: 6px; position: relative; margin-top: 5px; }
-        canvas.signature-pad { width: 100%; height: 120px; display: block; touch-action: none; cursor: crosshair; }
+        .signature-pad-container { border: 2px dashed var(--border-color); background: #fafafa; border-radius: 8px; position: relative; margin-top: 6px; }
+        canvas.signature-pad { width: 100%; height: 130px; display: block; touch-action: none; cursor: crosshair; }
         .sig-btn-row { display: flex; gap: 10px; margin-top: 8px; }
 
-        .emoji-selector { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
-        .emoji-option { font-size: 1.8em; cursor: pointer; padding: 8px; border-radius: 50%; border: 2px solid transparent; transition: transform 0.2s, background 0.2s; }
-        .emoji-option:hover { transform: scale(1.1); background: #f0f0f0; }
-        .emoji-option.selected { border-color: var(--accent-color); background: #fef5ec; transform: scale(1.15); }
+        .emoji-selector { display: flex; gap: 12px; justify-content: center; margin: 12px 0; }
+        .emoji-option { font-size: 2em; cursor: pointer; padding: 8px; border-radius: 50%; border: 2px solid transparent; transition: transform 0.2s, background 0.2s; }
+        .emoji-option:hover { transform: scale(1.1); background: #f1f5f9; }
+        .emoji-option.selected { border-color: var(--accent-color); background: #fef3c7; transform: scale(1.15); }
 
         .buero-only { display: none !important; }
         .monteur-only { display: block !important; }
         
         @media (max-width: 600px) { .row { flex-direction: column; gap: 0; } }
 
-        /* --- DIN A4 DRUCKBERICHT STYLES --- */
-        #modalMonatsbericht .modal-box {
-            max-width: 210mm;
-            width: 100%;
-            padding: 15mm;
-            background: #fff;
-            color: #000;
-            box-sizing: border-box;
+        /* --- DIN A4 DRUCKBERICHT & MODAL OPTIMIERUNG --- */
+        #modalMonatsBericht .modal-box, #modalWochenBericht .modal-box, #modalKundenBericht .modal-box, #modalKundenFolderDetail .modal-box {
+            max-width: 210mm; width: 100%; min-height: 297mm; padding: 20mm; background: #fff; color: #111; 
+            box-sizing: border-box; box-shadow: 0 0 25px rgba(0,0,0,0.15); margin: auto; border-radius: 0;
         }
 
-        .a4-report-page {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 14px;
-            color: #111;
-        }
-
-        .a4-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #2c3e50;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .a4-header h2 {
-            margin: 0;
-            color: #2c3e50;
-            font-size: 22px;
-        }
-
-        .a4-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        .a4-table th, .a4-table td {
-            border: 1px solid #cbd5e1;
-            padding: 8px 10px;
-            text-align: left;
-            vertical-align: top;
-            font-size: 13px;
-        }
-
-        .a4-table th {
-            background-color: #f1f5f9;
-            color: #1e293b;
-            font-weight: bold;
-        }
-
-        .a4-summary {
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 15px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .a4-signature-section {
-            margin-top: 30px;
-            page-break-inside: avoid;
-        }
+        .a4-report-page { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #1e293b; line-height: 1.5; }
+        .a4-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; margin-bottom: 25px; }
+        .a4-header h2 { margin: 0; color: var(--primary-color); font-size: 22px; }
+        
+        .a4-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .a4-table th, .a4-table td { border: 1px solid var(--border-color); padding: 9px 12px; text-align: left; vertical-align: top; font-size: 12px; }
+        .a4-table th { background-color: #f8fafc; color: var(--primary-color); font-weight: 700; }
+        .a4-summary { background: #f8fafc; border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; }
+        .a4-signature-section { margin-top: 40px; page-break-inside: avoid; }
 
         @media print {
-            body {
-                background: none !important;
-                background-color: #fff !important;
-            }
-            body * {
-                visibility: hidden !important;
-            }
-            #modalMonatsbericht, #modalMonatsbericht * {
-                visibility: visible !important;
-            }
-            #modalMonatsbericht {
-                position: fixed !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: white !important;
-                display: flex !important;
-                align-items: flex-start !important;
-                justify-content: center !important;
-                z-index: 99999 !important;
-                overflow: visible !important;
-                padding: 0 !important;
-            }
-            #modalMonatsbericht .modal-box {
-                box-shadow: none !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                height: auto !important;
-                max-height: none !important;
-                padding: 10mm !important;
-                margin: 0 !important;
-                background: white !important;
-            }
-            .modal-close, .no-print {
-                display: none !important;
-            }
+            body { background: none; padding: 0; }
+            .modal-overlay { position: static; background: none; backdrop-filter: none; display: flex !important; padding: 0; }
+            .container, #splash-screen, .tabs, .modal-close, button { display: none !important; }
+            #modalMonatsBericht .modal-box, #modalWochenBericht .modal-box { box-shadow: none; max-width: 100%; width: 100%; padding: 0; margin: 0; min-height: auto; }
         }
     </style>
 </head>
@@ -358,7 +310,7 @@
 <div id="authModal" class="auth-overlay" style="display:none;">
     <div id="stepChoice" class="auth-card">
         <h2>Bereich auswählen</h2>
-        <p>Modus wählen:</p>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Bitte wählen Sie Ihren Modus:</p>
         <div class="auth-choice-btns">
             <button class="btn-primary" onclick="showAuthForm('buero')">🏢 Büro Modus / Anmeldung</button>
             <button class="btn-success" onclick="showAuthForm('bueroRegister')">✨ Büro Registrierung</button>
@@ -374,23 +326,23 @@
             <input type="email" id="bueroEmail" placeholder="name@firma.de">
         </div>
         <div class="form-group">
-            <label>Freischaltcode / Passwort:</label>
-            <input type="password" id="bueroCode" placeholder="Code eingeben">
+            <label>Passwort:</label>
+            <input type="password" id="bueroCode" placeholder="Passwort eingeben">
         </div>
-        <button class="btn-primary" onclick="loginBuero()">Anmelden</button>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+        <button class="btn-primary" onclick="loginBuero()" style="padding: 12px; margin-top: 5px;">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="resetAuthView()">Zurück</button>
     </div>
 
     <!-- BÜRO REGISTRIERUNG -->
     <div id="stepBueroRegister" class="auth-card" style="display:none;">
         <h2>✨ Büro Registrierung</h2>
-        <p style="font-size: 0.85em; color: #666; margin-bottom: 15px;">Das Passwort wird automatisch generiert und hier angezeigt.</p>
+        <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 15px;">Das Passwort wird automatisch generiert und im Anschluss angezeigt.</p>
         <div class="form-group">
             <label>Firmen-E-Mail:</label>
             <input type="email" id="bueroRegEmail" placeholder="firma@buero.de">
         </div>
-        <button class="btn-success" onclick="registerBuero()">Registrieren & Passwort generieren</button>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+        <button class="btn-success" onclick="registerBuero()" style="padding: 12px; margin-top: 5px;">Registrieren & Passwort generieren</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="resetAuthView()">Zurück</button>
     </div>
 
     <!-- MONTEUR LOGIN -->
@@ -404,41 +356,451 @@
             <label>Passwort:</label>
             <input type="password" id="monteurPassword" placeholder="Dein Passwort">
         </div>
-        <button class="btn-primary" onclick="loginMonteur()">Anmelden</button>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="resetAuthView()">Zurück</button>
+        <button class="btn-primary" onclick="loginMonteur()" style="padding: 12px; margin-top: 5px;">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="resetAuthView()">Zurück</button>
     </div>
 </div>
 
-<!-- MODAL: ANZEIGE AUTOMATISCH GENERIERTES PASSWORT -->
+<!-- MODAL: PASSWORT ANZEIGE -->
 <div id="modalGeneratedPassword" class="auth-overlay" style="display:none; z-index: 9400;">
     <div class="auth-card">
         <h2>🎉 Erfolgreich registriert!</h2>
-        <p>Ihr Büro-Zugang wurde eingerichtet. Bitte speichern Sie Ihr automatisch generiertes Passwort (Freischaltcode) gut ab:</p>
+        <p style="color: var(--text-muted); font-size: 0.95em;">Ihr Büro-Zugang wurde eingerichtet. Bitte speichern Sie Ihr automatisch generiertes Passwort:</p>
         <div class="form-group" style="margin: 20px 0;">
-            <input type="text" id="generatedPasswordDisplay" readonly style="font-weight: bold; text-align: center; font-size: 1.2em; background: #f1f5f9; color: var(--primary-color);">
+            <input type="text" id="generatedPasswordDisplay" readonly style="font-weight: bold; text-align: center; font-size: 1.2em; background: #f8fafc; color: var(--primary-color);">
         </div>
-        <button class="btn-primary" onclick="closeGeneratedPasswordModal()">Verstanden & Weiter zum Login</button>
+        <button class="btn-primary" onclick="closeGeneratedPasswordModal()" style="padding: 12px;">Verstanden & Weiter zum Login</button>
     </div>
 </div>
 
-<!-- MODAL: BÜRO PASSWORT ABFRAGE FÜR ADMIN-AKTIONEN -->
+<!-- MODAL: BÜRO FREIGABE -->
 <div id="modalAdminCheck" class="auth-overlay" style="display:none; z-index: 9200;">
     <div class="auth-card">
         <h2>🔒 Büro-Freigabe erforderlich</h2>
-        <p id="adminCheckActionText">Bitte gib den Büro-Freischaltcode ein:</p>
+        <p id="adminCheckActionText" style="color: var(--text-muted);">Bitte geben Sie das Büro-Passwort ein:</p>
         <div class="form-group">
-            <label>Freischaltcode:</label>
-            <input type="password" id="adminCheckCode" placeholder="Code eingeben">
+            <label>Büro-Passwort:</label>
+            <input type="password" id="adminCheckCode" placeholder="Passwort eingeben">
         </div>
-        <button class="btn-primary" onclick="confirmAdminAction()">Bestätigen</button>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="closeModal('modalAdminCheck')">Abbrechen</button>
+        <button class="btn-primary" onclick="confirmAdminAction()" style="padding: 12px;">Bestätigen</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="closeModal('modalAdminCheck')">Abbrechen</button>
+    </div>
+</div>
+
+<!-- MODAL: BERICHT TYP WAHL -->
+<div id="modalBerichtTypWahl" class="modal-overlay" style="z-index: 9450;">
+    <div class="auth-card" style="max-width: 440px;">
+        <div class="modal-header-actions" style="margin-bottom:10px;">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBerichtTypWahl')">✕</button>
+        </div>
+        <h2>📄 Bericht erstellen</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Welche Art von Bericht möchten Sie generieren?</p>
+        <div class="auth-choice-btns">
+            <button class="btn-primary" onclick="selectBerichtTyp('woche')">📅 Wochenbericht erstellen</button>
+            <button class="btn-secondary" onclick="selectBerichtTyp('monat')" style="background-color: #7c3aed;">📊 Monatsbericht erstellen</button>
+            <button class="btn-danger" style="margin-top: 8px; padding: 12px;" onclick="closeModal('modalBerichtTypWahl')">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: WOCHENBERICHT DIN A4 -->
+<div id="modalWochenBericht" class="modal-overlay" style="z-index: 9500;">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalWochenBericht')">✕</button>
+        </div>
+        <div class="a4-report-page">
+            <div class="a4-header">
+                <div>
+                    <h2>Arbeitszeiterfassung / Wochenbericht</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: var(--text-muted);">Mitarbeiter: <strong id="wochenBerichtMonteur">-</strong></p>
+                </div>
+                <div>
+                    <img id="wochenBerichtLogo" class="logo-preview" style="max-height: 45px; max-width: 140px; display: none;" alt="Logo">
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 12px; font-weight: bold;" id="wochenBerichtDatumHeader">-</p>
+                    <p style="margin: 3px 0 0 0; font-size: 11px; color: var(--text-muted);">Zeitraum: <span id="wochenBerichtZeitraum">-</span></p>
+                </div>
+            </div>
+
+            <table class="a4-table">
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Datum</th>
+                        <th style="width: 25%;">Kunde / Ort</th>
+                        <th style="width: 40%;">Tätigkeiten / Bemerkungen</th>
+                        <th style="width: 17%; text-align: right;">Dauer (Std.)</th>
+                    </tr>
+                </thead>
+                <tbody id="wochenBerichtTableBody"></tbody>
+            </table>
+
+            <div class="a4-summary">
+                <span>Gesamtzeit der Woche:</span>
+                <span id="wochenBerichtTotalHours">0,00 Std.</span>
+            </div>
+
+            <div class="a4-signature-section" style="text-align: center; margin-top: 30px;">
+                <img id="wochenBerichtLogoFooter" class="logo-preview" style="max-height: 60px; max-width: 180px; display: block; margin: 0 auto;" alt="Logo">
+            </div>
+
+            <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" onclick="speichereBerichtLokal('Wochenbericht')" style="width: auto; padding: 10px 18px;">💾 Bericht speichern (Download)</button>
+                <button type="button" class="btn-secondary" onclick="window.print()" style="width: auto; padding: 10px 18px;">🖨️ Drucken / PDF</button>
+                <button type="button" class="btn-success" onclick="sendeBerichtAnsBuero('Wochenbericht')" style="width: auto; padding: 10px 18px;">📤 Ins Büro verschicken</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: MONATSBERICHT DIN A4 -->
+<div id="modalMonatsBericht" class="modal-overlay" style="z-index: 9500;">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalMonatsBericht')">✕</button>
+        </div>
+        <div class="a4-report-page">
+            <div class="a4-header">
+                <div>
+                    <h2>Arbeitszeiterfassung / Monatsbericht</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: var(--text-muted);">Mitarbeiter: <strong id="monatsBerichtMonteur">-</strong></p>
+                </div>
+                <div>
+                    <img id="monatsBerichtLogo" class="logo-preview" style="max-height: 45px; max-width: 140px; display: none;" alt="Logo">
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 12px; font-weight: bold;" id="monatsBerichtDatumHeader">-</p>
+                    <p style="margin: 3px 0 0 0; font-size: 11px; color: var(--text-muted);">Berichtsmonat: <span id="monatsBerichtZeitraum">-</span></p>
+                </div>
+            </div>
+
+            <h4 style="color: var(--primary-color); margin-bottom: 6px; font-size: 13px;">Wochenübersicht & Zusammenfassung</h4>
+            <table class="a4-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Kalenderwoche / Zeitraum</th>
+                        <th style="width: 50%;">Enthaltene Tätigkeiten (Auszug)</th>
+                        <th style="width: 25%; text-align: right;">Wochensumme (Std.)</th>
+                    </tr>
+                </thead>
+                <tbody id="monatsBerichtWochenTableBody"></tbody>
+            </table>
+
+            <h4 style="color: var(--primary-color); margin-top: 15px; margin-bottom: 6px; font-size: 13px;">Detaillierte Einzelnachweise</h4>
+            <table class="a4-table">
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Datum</th>
+                        <th style="width: 25%;">Kunde / Ort</th>
+                        <th style="width: 40%;">Tätigkeiten</th>
+                        <th style="width: 17%; text-align: right;">Dauer (Std.)</th>
+                    </tr>
+                </thead>
+                <tbody id="monatsBerichtDetailsTableBody"></tbody>
+            </table>
+
+            <div class="a4-summary">
+                <span>Gesamtzeit des Monats:</span>
+                <span id="monatsBerichtTotalHours">0,00 Std.</span>
+            </div>
+
+            <div class="a4-signature-section">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                    <div style="width: 45%;">
+                        <p style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold;">Unterschrift Mitarbeiter:</p>
+                        <div class="signature-pad-container" style="height: 70px;">
+                            <canvas id="monatsSigPad" class="signature-pad" style="height: 70px;"></canvas>
+                        </div>
+                        <button type="button" class="btn-danger" style="padding: 4px 8px; font-size: 0.75em; margin-top: 4px; width: auto;" onclick="clearMonatsSig()">Löschen</button>
+                    </div>
+                    <div style="width: 45%; border-top: 1px solid #333; padding-top: 5px; text-align: center;">
+                        <p style="margin: 0; font-size: 11px; color: var(--text-muted);">Unterschrift Büro / Freigabe</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" onclick="speichereBerichtLokal('Monatsbericht')" style="width: auto; padding: 10px 18px;">💾 Bericht speichern (Download)</button>
+                <button type="button" class="btn-secondary" onclick="window.print()" style="width: auto; padding: 10px 18px;">🖨️ Drucken / PDF</button>
+                <button type="button" class="btn-success" onclick="sendeBerichtAnsBuero('Monatsbericht')" style="width: auto; padding: 10px 18px;">📤 Ins Büro verschicken</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: BÜRO MANAGEMENT -->
+<div id="modalBueroManagement" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBueroManagement')">✕</button>
+        </div>
+        <h3>🏢 Büro Management</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie einen Bereich:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn-primary" onclick="openModal('modalMonteurErnennen');" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">🛠️</span> <strong>Monteur ernennen</strong> (Neuen Monteur anlegen & Berechtigen)
+            </button>
+            <button class="btn-secondary" onclick="openMonteurUebersichtModal();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">👥</span> <strong>Monteur Übersicht</strong> (Alle Monteure & Arbeitszeiten verwalten)
+            </button>
+            <button class="btn-success" onclick="openLogoUploadModal();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px; background-color: #0284c7;">
+                <span style="font-size: 1.2em;">🖼️</span> <strong>Firmen Logo hochladen</strong> (Logo für App und Berichte aktualisieren)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: MONTEUR ÜBERSICHT -->
+<div id="modalMonteurUebersicht" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalMonteurUebersicht')">✕</button>
+        </div>
+        <h3>👥 Monteur Übersicht</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em;">Liste aller registrierten Monteure:</p>
+        <div id="modalBueroMonteursList" class="scrollable-folder" style="margin-top: 15px;">Lade Monteure...</div>
+    </div>
+</div>
+
+<!-- MODAL: LOGO UPLOAD -->
+<div id="modalLogoUpload" class="modal-overlay">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalLogoUpload')">✕</button>
+        </div>
+        <h3>🖼️ Firmen Logo hochladen</h3>
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Logo Datei wählen:</label>
+            <input type="file" id="modalLogoInput" accept="image/*" onchange="handleLogoUpload(event)">
+            <small style="color: var(--text-muted);">Das Logo erscheint sofort in der App und auf Berichten.</small>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: BÜRO DOKUMENTE / UNTERLAGEN HOCHLADEN & WEITERLEITEN -->
+<div id="modalBueroDokumente" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBueroDokumente')">✕</button>
+        </div>
+        <h3>📁 Dokumente / Unterlagen verwalten</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 15px;">Laden Sie Dokumente hoch und leiten Sie diese an einen oder mehrere Monteure weiter.</p>
+        
+        <form id="bueroDokumentForm" onsubmit="saveAndForwardDokument(event)">
+            <div class="form-group">
+                <label>Dokument / Datei wählen:</label>
+                <input type="file" id="bueroDokumentFile" required onchange="handleBueroDokumentFileSelect(event)">
+            </div>
+            <div class="form-group">
+                <label>Titel / Bezeichnung:</label>
+                <input type="text" id="bueroDokumentTitel" placeholder="z. B. Bauplan Projekt X" required>
+            </div>
+            <div class="form-group">
+                <label>An Monteur(e) weiterleiten:</label>
+                <div id="bueroDokumentMonteursContainer" class="monteur-checkbox-group">Lade Monteure...</div>
+            </div>
+            <button type="submit" class="btn-primary" style="padding: 12px; margin-top: 5px;">📤 Dokument hochladen & weiterleiten</button>
+        </form>
+
+        <hr style="margin: 25px 0; border:0; border-top: 1px solid var(--border-color);">
+
+        <h4>📂 Gesendete Dokumente</h4>
+        <div id="bueroGesendeteDokumenteList" class="scrollable-folder" style="max-height: 200px;">Lade Dokumente...</div>
+    </div>
+</div>
+
+<!-- MODAL: EINZELBILD / ZOOM / ZEICHNEN IN GALERIE & EXTERNES PROGRAMM -->
+<div id="modalGalerieDetail" class="modal-overlay" style="z-index: 9600;">
+    <div class="modal-box" style="max-width: 750px; text-align: center;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalGalerieDetail')">✕</button>
+        </div>
+        <h3 id="galerieDetailTitle">🖼️ Bild-Ansicht & Bearbeitung</h3>
+        <p style="color: var(--text-muted); font-size: 0.85em;">Vergrößern Sie das Bild, zeichnen Sie darauf oder öffnen Sie es mit Ihrem eigenen Programm.</p>
+        
+        <div style="position: relative; display: inline-block; max-width: 100%; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #000; margin-top: 10px;">
+            <img id="galerieDetailImage" src="" alt="Einzelbild" style="display: block; max-width: 100%; max-height: 50vh; margin: auto; transition: transform 0.2s; transform-origin: center;">
+            <canvas id="galerieDrawCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair;"></canvas>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 8px 14px;" onclick="zoomGalerieImage(0.2)">🔍 Vergrößern (+)</button>
+            <button type="button" class="btn-secondary" style="width: auto; padding: 8px 14px;" onclick="zoomGalerieImage(-0.2)">🔍 Verkleinern (-)</button>
+            <a id="galerieOpenExternalBtn" href="#" target="_blank" class="btn-primary" style="text-decoration:none; display:inline-block; padding:8px 14px; font-size:0.9em; line-height: normal;">🗂️ Mit eigenem Programm öffnen</a>
+            <button type="button" class="btn-danger" style="width: auto; padding: 8px 14px;" onclick="clearGalerieCanvas()">🧹 Zeichnung löschen</button>
+            <button type="button" class="btn-success" style="width: auto; padding: 8px 14px;" onclick="saveGalerieDrawing()">💾 Zeichnung speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: KUNDEN -->
+<div id="modalKundenHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundenHaupt')">✕</button>
+        </div>
+        <h3>👥 Kunden Verwaltung</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie eine Option:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn-primary" onclick="openKundenErstellenModal();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">➕</span> <strong>Neuer Kunde</strong> (Neuen Kundenstamm anlegen)
+            </button>
+            <button class="btn-secondary" onclick="openKundenStammErweitert();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">🗂️</span> <strong>Kundenstamm</strong> (Alle Kunden, Suche, Schwarze Liste)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: KUNDENSTAMM ERWEITERT -->
+<div id="modalKundenStammErweitert" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundenStammErweitert')">✕</button>
+        </div>
+        <h3>🗂️ Kundenstamm - Erweiterte Ansicht</h3>
+        <div style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="btn-primary" style="width: auto; padding: 8px 14px;" onclick="renderKundenStammFolders('', 'alle')">📋 Alle Kunden</button>
+            <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="kundenStammSearchInput" placeholder="🔍 Kunden suchen..." oninput="filterKundenStammFolders()">
+            </div>
+            <button class="btn-danger" style="width: auto; padding: 8px 14px;" onclick="renderKundenStammFolders('', 'schwarz')">⬛ Schwarze Liste</button>
+        </div>
+        <div id="kundenStammFoldersContainer" class="scrollable-folder" style="max-height: 350px;">Lade Kunden...</div>
+    </div>
+</div>
+
+<!-- MODAL: AUFTRÄGE -->
+<div id="modalAuftraegeHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalAuftraegeHaupt')">✕</button>
+        </div>
+        <h3>📋 Aufträge Verwaltung</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie eine Option:</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <button class="btn-primary" onclick="openAuftragModal();" style="padding: 14px; text-align: left;">
+                📝 <strong>Neuen Auftrag erstellen</strong>
+            </button>
+            <button class="btn-secondary" onclick="openAuftragSuchenModal();" style="padding: 14px; text-align: left;">
+                🔍 <strong>Auftrag suchen / filtern</strong>
+            </button>
+            <button class="btn-success" onclick="openErledigteAuftraegeModal();" style="padding: 14px; text-align: left;">
+                📂 <strong>Erledigte Aufträge</strong>
+            </button>
+            <button class="btn-danger" onclick="openEingegangeneAuftraegeModal();" style="padding: 14px; text-align: left;">
+                📥 <strong>Eingegangene fertige Aufträge</strong> (Zur Bestätigung)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: AUFTRAG SUCHEN -->
+<div id="modalAuftragSuchen" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalAuftragSuchen')">✕</button>
+        </div>
+        <h3>🔍 Auftrag suchen</h3>
+        <div class="form-group" style="margin-top: 15px;">
+            <input type="text" id="bueroSearchInput" placeholder="Suche nach Kunde, Ort, Monteur..." oninput="filterBueroFolders()">
+        </div>
+        <div id="auftraegeSuchergebnisContainer" class="scrollable-folder">Gib einen Suchbegriff ein...</div>
+    </div>
+</div>
+
+<!-- MODAL: ERLEDIGTE AUFTRÄGE -->
+<div id="modalErledigteAuftraege" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalErledigteAuftraege')">✕</button>
+        </div>
+        <h3>📂 Erledigte Aufträge</h3>
+        <div id="bueroErledigteOrdnerContainer" class="scrollable-folder" style="margin-top: 15px;">Lade erledigte Aufträge...</div>
+    </div>
+</div>
+
+<!-- MODAL: EINGEGANGENE FERTIGE AUFTRÄGE -->
+<div id="modalEingegangeneAuftraege" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalEingegangeneAuftraege')">✕</button>
+        </div>
+        <h3>📥 Eingegangene fertige Aufträge zur Bestätigung</h3>
+        <div id="bueroMonteurFoldersContainer" class="scrollable-folder" style="margin-top: 15px;">Lade eingegangene Aufträge...</div>
+    </div>
+</div>
+
+<!-- MODAL: BERICHTE -->
+<div id="modalBerichteHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBerichteHaupt')">✕</button>
+        </div>
+        <h3>📄 Berichte Verwaltung</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie den Berichtstyp:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group">
+                <label>Monteur für Bericht auswählen:</label>
+                <select id="selectBerichtMonteurWahl">
+                    <option value="">-- Angemeldeter Benutzer / Eigener --</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="wähleBerichtMitMonteur('woche')" style="padding: 14px; text-align: left;">
+                📅 <strong>Wochen Bericht</strong> (Mit Monteur-Auswahl)
+            </button>
+            <button class="btn-monatsbericht" onclick="wähleBerichtMitMonteur('monat')" style="margin: 0; padding: 14px; text-align: left;">
+                📊 <strong>Monats Bericht</strong> (Mit Monteur-Auswahl)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: GALERIE -->
+<div id="modalGalerieHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 700px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalGalerieHaupt')">✕</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0;">🖼️ Galerie & Kundenbilder</h3>
+            <button class="buero-only btn-secondary" style="width: auto; padding: 8px 14px; font-size: 0.9em;" onclick="downloadAllGalleryImagesZip()">📥 Alle Bilder als ZIP</button>
+        </div>
+        <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
+            <input type="text" id="galerieSearchInput" placeholder="🔍 Bild-Suchoption nach Name vom Kunden..." oninput="filterGalerieNachKunde()">
+        </div>
+        <div id="galleryContainer" class="gallery-grid">Lade Galerie...</div>
     </div>
 </div>
 
 <!-- MODAL: MONTEUR BEARBEITEN -->
 <div id="modalEditMonteur" class="modal-overlay">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('modalEditMonteur')">✕</button>
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalEditMonteur')">✕</button>
+        </div>
         <h3>✏️ Monteur bearbeiten</h3>
         <form id="editMonteurForm" onsubmit="saveEditedMonteur(event)">
             <input type="hidden" id="editMonteurOldName">
@@ -447,10 +809,10 @@
                 <input type="text" id="editMonteurName" required>
             </div>
             <div class="form-group">
-                <label>Neues Passwort vergeben:</label>
+                <label>Neues Passwort:</label>
                 <input type="password" id="editMonteurPass" placeholder="Neues Passwort" required>
             </div>
-            <button type="submit" class="btn-primary" style="margin-top:10px;">Änderungen speichern</button>
+            <button type="submit" class="btn-primary" style="margin-top:10px; padding: 12px;">Änderungen speichern</button>
         </form>
     </div>
 </div>
@@ -458,7 +820,10 @@
 <!-- MODAL: NEUER AUFTRAG -->
 <div id="modalAuftrag" class="modal-overlay">
     <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('modalAuftrag')">✕</button>
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalAuftrag')">✕</button>
+        </div>
         <h3>📝 Neuen Auftrag erstellen</h3>
         <form id="auftragForm" onsubmit="saveAuftrag(event)">
             <div class="row">
@@ -477,155 +842,124 @@
             </div>
             <div class="form-group">
                 <label>Monteure auswählen (mehrere möglich):</label>
-                <div id="auftragMonteursCheckboxContainer" class="monteur-checkbox-group">
-                    Lade Monteure...
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Datum:</label>
-                <input type="date" id="auftragTermin" required>
-            </div>
-            <button type="submit" class="btn-primary" style="margin-top:10px;">Auftrag speichern</button>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL: AUFTRAG IM BÜRO BEARBEITEN -->
-<div id="modalEditAuftragBuero" class="modal-overlay">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('modalEditAuftragBuero')">✕</button>
-        <h3>✏️ Auftrag im Büro bearbeiten</h3>
-        <form id="editAuftragBueroForm" onsubmit="saveEditedAuftragBuero(event)">
-            <input type="hidden" id="editAuftragId">
-            <div class="row">
-                <div class="form-group">
-                    <label>Kunde:</label>
-                    <input type="text" id="editAuftragKunde" required>
-                </div>
-                <div class="form-group">
-                    <label>Ort:</label>
-                    <input type="text" id="editAuftragOrt" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Beschreibung:</label>
-                <textarea id="editAuftragBeschreibung" required></textarea>
+                <div id="auftragMonteursCheckboxContainer" class="monteur-checkbox-group">Lade Monteure...</div>
             </div>
             <div class="row">
-                <div class="form-group">
-                    <label>Monteur Name:</label>
-                    <input type="text" id="editAuftragMonteur" required>
-                </div>
                 <div class="form-group">
                     <label>Datum:</label>
-                    <input type="date" id="editAuftragTermin" required>
+                    <input type="date" id="auftragTermin" required>
+                </div>
+                <div class="form-group">
+                    <label>Uhrzeit:</label>
+                    <input type="time" id="auftragUhrzeit">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Status:</label>
-                <select id="editAuftragStatus">
-                    <option value="offen">Offen</option>
-                    <option value="Fertiggestellt (Wartet auf Büro)">Fertiggestellt (Wartet auf Büro)</option>
-                    <option value="Vom Büro bearbeitet / Abgeschlossen">Vom Büro bearbeitet / Abgeschlossen</option>
-                </select>
-            </div>
-            <button type="submit" class="btn-primary" style="margin-top:10px;">Auftrag aktualisieren</button>
+            <button type="submit" class="btn-primary" style="margin-top:15px; padding: 12px;">Auftrag speichern</button>
         </form>
     </div>
 </div>
 
-<!-- MODAL: MONTEUR ERNENNEN (BÜRO) -->
+<!-- MODAL: MONTEUR ERNENNEN -->
 <div id="modalMonteurErnennen" class="modal-overlay">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('modalMonteurErnennen')">✕</button>
-        <h3>🛠️ Monteur ernennen & Passwort vergeben</h3>
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalMonteurErnennen')">✕</button>
+        </div>
+        <h3>🛠️ Monteur ernennen</h3>
         <form id="ernennenForm" onsubmit="saveMonteurCredential(event)">
             <div class="form-group">
                 <label>Monteur Name:</label>
-                <input type="text" id="newMonteurName" placeholder="Exakter Name des Monteurs" required>
+                <input type="text" id="newMonteurName" placeholder="Name des Monteurs" required>
             </div>
             <div class="form-group">
                 <label>Passwort vergeben:</label>
                 <input type="password" id="newMonteurPass" placeholder="Sicheres Passwort" required>
             </div>
-            <button type="submit" class="btn-primary" style="margin-top:10px;">Speichern & Freigeben</button>
+            <button type="submit" class="btn-primary" style="margin-top:10px; padding: 12px;">Speichern & Freigeben</button>
         </form>
     </div>
 </div>
 
-<!-- MODAL: MONTEUR ARBEITSZEITEN DETAIL (BÜRO) -->
-<div id="modalMonteurDetails" class="modal-overlay">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeModal('modalMonteurDetails')">✕</button>
-        <h3 id="detailMonteurTitle">🛠️ Arbeitszeiten</h3>
-        <p><strong>Gesamtstunden:</strong> <span id="detailMonteurHours" class="badge">0,00 Std.</span></p>
-        <div id="detailMonteurEntriesList">Lade Einträge...</div>
-    </div>
-</div>
-
-<!-- MODAL: MONTEUR-AUSWAHL FÜR MONATSBERICHT -->
-<div id="modalMonteurAuswahl" class="modal-overlay" style="z-index: 9300;">
-    <div class="modal-box" style="max-width: 400px; text-align: center;">
-        <button class="modal-close" onclick="closeModal('modalMonteurAuswahl')">✕</button>
-        <h3>Monteur auswählen</h3>
-        <p style="font-size: 14px; color: #666;">Bitte wähle den Monteur aus, für den der Monatsbericht erstellt werden soll:</p>
-        <select id="modalMonteurSelect" style="width: 100%; padding: 12px; margin: 15px 0; font-size: 16px; border: 1px solid #ccc; border-radius: 6px;">
-            <option value="">Lade Monteure...</option>
-        </select>
-        <div style="display: flex; gap: 10px; justify-content: space-between;">
-            <button type="button" class="btn-danger" style="flex: 1; padding: 10px;" onclick="closeModal('modalMonteurAuswahl')">Abbrechen</button>
-            <button type="button" class="btn-success" style="flex: 1; padding: 10px;" onclick="bestätigeMonteurAuswahl()">OK</button>
+<!-- MODAL: KUNDE ERSTELLEN / BEARBEITEN -->
+<div id="modalKundeBearbeiten" class="modal-overlay" style="z-index: 9350;">
+    <div class="modal-box" style="max-width: 520px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundeBearbeiten')">✕</button>
         </div>
+        <h3 id="kundeModalTitle">➕ Kunden-Stammdaten</h3>
+        <form id="kundeForm" onsubmit="saveKundeStamm(event)">
+            <input type="hidden" id="kundeEditOriginalName">
+            <div class="form-group">
+                <label>Kundenname:</label>
+                <input type="text" id="kundeStammName" required placeholder="Firmenname / Name">
+            </div>
+            <div class="form-group">
+                <label>Adresse (Standort):</label>
+                <input type="text" id="kundeStammAdresse" required placeholder="Straße, PLZ Ort">
+            </div>
+            <div class="form-group">
+                <label>Rechnungsadresse (falls abweichend):</label>
+                <input type="text" id="kundeStammRechnungsAdresse" placeholder="Abweichende Rechnungsadresse (optional)">
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Telefon:</label>
+                    <input type="text" id="kundeStammTelefon" placeholder="z. B. 089 123456">
+                </div>
+                <div class="form-group">
+                    <label>Handy:</label>
+                    <input type="text" id="kundeStammHandy" placeholder="z. B. 0151 9876543">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notizen:</label>
+                <textarea id="kundeStammNotiz" placeholder="Ansprechpartner, Besonderheiten..."></textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 10px; padding: 12px;">Kunden speichern</button>
+        </form>
     </div>
 </div>
 
-<!-- MODAL: MONATSBERICHT (A4 DRUCKANSICHT) -->
-<div id="modalMonatsbericht" class="modal-overlay">
+<!-- MODAL: KUNDEN-ORDNER DETAILANSICHT -->
+<div id="modalKundenFolderDetail" class="modal-overlay" style="z-index: 9400;">
     <div class="modal-box">
-        <button class="modal-close no-print" onclick="closeModal('modalMonatsbericht')">✕</button>
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundenFolderDetail')">✕</button>
+        </div>
         <div class="a4-report-page">
             <div class="a4-header">
                 <div>
-                    <h2>Monatsbericht / Leistungsnachweis</h2>
-                    <p style="margin: 5px 0 0 0; color: #64748b;" id="reportPrintSub">Monteur & Zeitraum</p>
-                </div>
-                <div>
-                    <strong id="reportPrintMonteurname" style="font-size: 18px; color: var(--primary-color);">-</strong>
+                    <h2>📁 Kunden-Ordner: <span id="folderDetailKundeName" style="color: var(--accent-color);">-</span></h2>
+                    <p style="margin: 5px 0 0 0; color: var(--text-muted);" id="folderDetailSub">Stammdaten, Aufträge & Zeiterfassung</p>
                 </div>
             </div>
 
-            <table class="a4-table">
-                <thead>
-                    <tr>
-                        <th style="width: 18%;">Datum</th>
-                        <th style="width: 15%;">Zeit</th>
-                        <th>Kunde, Ort, Tätigkeiten</th>
-                    </tr>
-                </thead>
-                <tbody id="a4TableBody">
-                    <!-- Dynamische Einträge -->
-                </tbody>
-            </table>
+            <div class="card" style="background: #f8fafc; border-left: 4px solid var(--primary-color);">
+                <h4>📌 Stammdaten & Kontakt</h4>
+                <p><strong>Adresse:</strong> <span id="folderDetailAdresse">-</span></p>
+                <p><strong>Rechnungsadresse:</strong> <span id="folderDetailRechnungsAdresse">-</span></p>
+                <p><strong>Telefon:</strong> <span id="folderDetailTelefon">-</span> | <strong>Handy:</strong> <span id="folderDetailHandy">-</span></p>
+                <p><strong>Notizen:</strong> <span id="folderDetailNotiz">-</span></p>
+                <button class="btn-primary" style="width: auto; padding: 8px 14px; font-size: 0.9em; margin-top: 5px;" onclick="openEditKundeFromFolder()">Stammdaten bearbeiten</button>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent-color);">
+                <h4>📋 Zugeordnete Aufträge</h4>
+                <div id="folderDetailAuftraegeList" class="scrollable-folder" style="max-height: 150px;">Keine Aufträge.</div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--success-color);">
+                <h4>⏱️ Erfasste Stunden</h4>
+                <div id="folderDetailEintraegeList" class="scrollable-folder" style="max-height: 180px;">Keine Stundeneinträge.</div>
+            </div>
 
             <div class="a4-summary">
-                <span>Zusammenfassung der Gesamtstunden:</span>
-                <span id="a4TotalHoursDisplay">0,00 Std.</span>
+                <span>Gesamtstunden für diesen Kunden:</span>
+                <span id="folderDetailTotalHours">0,00 Std.</span>
             </div>
-
-            <div class="a4-signature-section">
-                <label style="margin-bottom: 5px; font-size: 13px; color: #333;">Unterschrift des Monteurs:</label>
-                <div id="reportSigContainer" class="signature-pad-container" style="background: #fff; max-width: 300px;">
-                    <canvas id="reportSignaturePad" class="signature-pad" style="height: 100px;"></canvas>
-                </div>
-                <div class="sig-btn-row no-print" style="max-width: 300px;">
-                    <button type="button" class="btn-danger" style="padding: 6px; font-size: 0.85em;" onclick="clearReportSignature()">Unterschrift löschen</button>
-                </div>
-            </div>
-        </div>
-
-        <div style="margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end;" class="no-print">
-            <button class="btn-secondary" style="width: auto; padding: 10px 20px;" onclick="downloadMonatsberichtFile()">📥 Als Datei downloaden</button>
-            <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="window.print()">🖨️ Bericht ausdrucken</button>
         </div>
     </div>
 </div>
@@ -638,67 +972,69 @@
 
     <!-- BÜRO BENACHRICHTIGUNGS-BANNER -->
     <div id="notificationBanner" class="buero-only">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.5em;">🔔</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.6em;">🔔</span>
             <span id="notificationText">Es sind neue fertige Aufträge eingegangen!</span>
         </div>
-        <button onclick="dismissNotificationAndGoBerichte()" style="background: white; color: #c0392b; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">Ansehen</button>
+        <button onclick="dismissNotificationAndGoBerichte()" style="background: white; color: var(--danger-color); border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;">Ansehen</button>
     </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('home', event)">🏠 Start</button>
-        <button class="tab-btn" onclick="switchTab('auftraege', event)">📋 Aufträge</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('auftraege', event)">📋 Aufträge</button>
         <button class="tab-btn monteur-only" id="tabBtnErfassung" onclick="switchTab('erfassung', event)">✏️ Eingabe</button>
-        <button class="tab-btn" onclick="switchTab('galerie', event)">🖼️ Galerie</button>
-        <button class="tab-btn" onclick="switchTab('berichte', event)" id="mainTabBerichteBtn">📄 Berichte</button>
-        <button class="btn-monatsbericht" onclick="openMonatsberichtModal()">📄 Monatsbericht</button>
-        <button class="tab-btn buero-only" id="tabBtnBuero" onclick="switchTab('buero', event)">🏢 Büro</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('galerie', event)">🖼️ Galerie</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('berichte', event)" id="mainTabBerichteBtn">📄 Berichte</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('monteurDokumente', event)">📁 Dokumente</button>
+        <button class="tab-btn buero-only" id="tabBtnBuero" onclick="switchTab('buero', event)">🏢 Büro Modus</button>
     </div>
 
     <!-- START TAB -->
     <div id="tab-home" class="tab-content active">
         <div class="card" style="text-align: center;">
-            <h2>📋 Übersicht</h2>
-            <p>Eingeloggt als: <strong id="currentUserDisplay">-</strong> (<span id="currentRoleDisplay">-</span>)</p>
-            <div class="dashboard-grid">
-                <div class="dash-card" onclick="switchTab('auftraege')"><span class="icon">📋</span><span>Aufträge</span></div>
-                <div class="dash-card monteur-only" onclick="switchTab('erfassung')"><span class="icon">✏️</span><span>Stunden</span></div>
+            <h2>📋 Dashboard-Übersicht</h2>
+            <p style="color: var(--text-muted);">Eingeloggt als: <strong id="currentUserDisplay">-</strong> (<span id="currentRoleDisplay">-</span>)</p>
+            <div class="dashboard-grid monteur-only">
+                <div class="dash-card" id="dashCardAuftraege" onclick="switchTab('auftraege')"><span class="icon">📋</span><span>Aufträge</span></div>
+                <div class="dash-card" onclick="switchTab('erfassung')"><span class="icon">✏️</span><span>Stunden</span></div>
                 <div class="dash-card" onclick="switchTab('galerie')"><span class="icon">🖼️</span><span>Galerie</span></div>
+                <div class="dash-card" onclick="switchTab('monteurDokumente')"><span class="icon">📁</span><span>Dokumente</span></div>
                 <div class="dash-card" onclick="switchTab('berichte', null, true)"><span class="icon">📄</span><span>Berichte</span></div>
-                <div class="dash-card buero-only" onclick="switchTab('buero')"><span class="icon">🏢</span><span>Büro</span></div>
             </div>
-            <br>
-            <button class="btn-danger" style="width:auto; padding: 8px 15px;" onclick="logout()">🔒 Abmelden</button>
+            <div class="buero-only" style="margin-top: 20px;">
+                <p>Sie sind im Büro-Modus angemeldet. Klicken Sie unten auf den Reiter <strong>"Büro Modus"</strong>, um zur Verwaltungsübersicht zu gelangen.</p>
+                <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="switchTab('buero')">🏢 Zum Büro Modus</button>
+            </div>
+            <br><br>
+            <button class="btn-danger" style="width:auto; padding: 10px 20px;" onclick="logout()">🔒 Abmelden</button>
         </div>
     </div>
 
     <!-- AUFTRÄGE TAB -->
     <div id="tab-auftraege" class="tab-content">
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0;">📋 Aufträge (Offen)</h3>
-                <button class="buero-only btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="downloadAuftraegeList()">📥 Auftragsliste downloaden</button>
-            </div>
-            <div id="auftraegeList">Lade Aufträge...</div>
+            <h3 style="margin: 0;">📋 Offene Aufträge</h3>
+            <p style="color: var(--text-muted); font-size: 0.9em;">Hier sehen Sie Ihre aktuellen offenen Aufträge. Sie können direkt zum Stundenzettel wechseln und den Auftrag abschließen.</p>
+            <div id="auftraegeList" style="margin-top: 15px;">Lade Aufträge...</div>
         </div>
     </div>
 
-    <!-- ERFASSUNG TAB (Nur für Monteure) -->
+    <!-- ERFASSUNG TAB -->
     <div id="tab-erfassung" class="tab-content">
         <div class="card">
-            <h3>Neuen Stundenzettel-Eintrag & Auftrag abschließen</h3>
+            <h3>✏️ Stundenzettel & Auftrag abschließen</h3>
             <form id="entryForm" onsubmit="saveEntry(event)">
                 <div class="form-group">
-                    <label>Zugeordneter Auftrag (optional / falls vorhanden):</label>
+                    <label>Zugeordneter Auftrag (optional):</label>
                     <select id="selectAuftragZuordnung" onchange="fillFromAuftragSelection()">
-                        <option value="">-- Keinen Auftrag auswählen (freier / selbst erstellter Eintrag) --</option>
+                        <option value="">-- Keinen Auftrag auswählen (freier Eintrag) --</option>
                     </select>
                 </div>
                 <div class="row">
                     <div class="form-group">
                         <label>Kunde auswählen:</label>
                         <select id="selectKundeDropdown" onchange="handleCustomerDropdownChange()">
-                            <option value="">-- Neuen Kunden eingeben oder wählen --</option>
+                            <option value="">-- Kunden wählen --</option>
                         </select>
                     </div>
                     <div class="form-group" id="manualKundeGroup" style="display:none;">
@@ -706,16 +1042,16 @@
                         <input type="text" id="kundeManuell" placeholder="Kundenname">
                     </div>
                     <div class="form-group">
-                        <label>Ort (wird automatisch ausgefüllt, kann geändert werden):</label>
+                        <label>Ort:</label>
                         <input type="text" id="ort" placeholder="Ort" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Tätigkeit:</label>
-                    <textarea id="taetigkeit" placeholder="Tätigkeit..." required></textarea>
+                    <textarea id="taetigkeit" placeholder="Tätigkeitsbeschreibung..." required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Fotos:</label>
+                    <label>Fotos (werden automatisch komprimiert):</label>
                     <input type="file" id="taetigkeitFotos" accept="image/*" multiple onchange="handleImageUpload(event)">
                     <div id="photoPreview" class="image-preview-container"></div>
                 </div>
@@ -730,15 +1066,14 @@
                     </div>
                 </div>
 
-                <!-- KUNDEN-ZUFRIEDENHEIT -->
-                <div class="form-group" style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div class="form-group" style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
                     <label>Kunden-Zufriedenheit (optional):</label>
                     <div class="emoji-selector">
                         <span class="emoji-option" onclick="selectEmoji('😊', this)">😊</span>
                         <span class="emoji-option" onclick="selectEmoji('😐', this)">😐</span>
                         <span class="emoji-option" onclick="selectEmoji('😞', this)">😞</span>
                     </div>
-                    <textarea id="kundenFeedbackText" placeholder="Optionaler Kommentar zur Zufriedenheit..."></textarea>
+                    <textarea id="kundenFeedbackText" placeholder="Optionaler Kommentar..."></textarea>
                 </div>
 
                 <div class="form-group">
@@ -747,10 +1082,10 @@
                         <canvas id="signaturePad" class="signature-pad"></canvas>
                     </div>
                     <div class="sig-btn-row">
-                        <button type="button" class="btn-danger" onclick="clearSignature()">Löschen</button>
+                        <button type="button" class="btn-danger" style="width: auto; padding: 6px 14px;" onclick="clearSignature()">Unterschrift löschen</button>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary" style="margin-top: 15px;">Abschicken & Auftrag fertigstellen</button>
+                <button type="submit" id="submitEntryBtn" class="btn-primary" style="margin-top: 15px; padding: 14px;">Abschicken & Auftrag fertigstellen</button>
             </form>
         </div>
     </div>
@@ -758,56 +1093,28 @@
     <!-- GALERIE TAB -->
     <div id="tab-galerie" class="tab-content">
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0;">🖼️ Galerie</h3>
-                <button class="buero-only btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="downloadAllGalleryImagesZip()">📥 Alle Bilder als ZIP herunterladen</button>
-            </div>
-            <div id="galleryContainer" class="gallery-grid"></div>
+            <h3 style="margin: 0;">🖼️ Foto-Galerie</h3>
+            <p style="color: var(--text-muted); font-size: 0.9em;">Klicken Sie auf ein Bild, um es zu vergrößern, zu bearbeiten oder mit Ihrem eigenen Programm zu öffnen.</p>
+            <div id="galleryContainerMonteure" class="gallery-grid" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <!-- MONTEUR DOKUMENTE TAB -->
+    <div id="tab-monteurDokumente" class="tab-content">
+        <div class="card">
+            <h3>📁 Erhaltene Dokumente & Unterlagen</h3>
+            <p style="color: var(--text-muted); font-size: 0.9em;">Hier finden Sie Dokumente, die Ihnen vom Büro zugeschickt wurden.</p>
+            <div id="monteurDokumenteList" class="scrollable-folder" style="margin-top: 15px; max-height: 350px;">Lade Dokumente...</div>
         </div>
     </div>
 
     <!-- BERICHTE TAB -->
     <div id="tab-berichte" class="tab-content">
-        <!-- BÜRO-SPEZIFISCHE SEKTIONEN IM BERICHTE TAB -->
-        <div class="buero-only">
-            <!-- SEKTION 1: SEPERATE ORDNER FÜR FERTIGE AUFTRÄGE PRO MONTEUR MIT SUCHFUNKTION & MONAT/WOCHE/TAG -->
-            <div class="card" style="border-left: 4px solid #e67e22;">
-                <h3>📥 Eingegangene fertige Aufträge</h3>
-                <p style="color: #666; font-size: 0.9em;">Klicke auf den Button, um die eingegangenen fertigen Aufträge zu laden und anzuzeigen:</p>
-                <button type="button" class="btn-primary" style="margin-top: 5px; margin-bottom: 15px;" onclick="toggleBueroSection('eingegangen')">📥 Eingegangene Aufträge anzeigen</button>
-                
-                <div id="bueroEingegangenContentWrapper" style="display: none;">
-                    <!-- SUCHLEISTE -->
-                    <div class="form-group" style="margin-top: 15px;">
-                        <input type="text" id="bueroSearchInput" placeholder="🔍 Suche nach Kunde, Datum, Tätigkeit..." oninput="filterBueroFolders()">
-                    </div>
-
-                    <!-- SEPARATER SUCH-ERGEBNIS-ORDNER -->
-                    <div id="bueroSearchResultsFolder" style="display: none; margin-bottom: 20px;"></div>
-
-                    <!-- CONTAINER DER STANDARD MONTEUR ORDNER -->
-                    <div id="bueroMonteurFoldersContainer" style="margin-top: 15px;">Lade Monteur-Ordner...</div>
-                </div>
-            </div>
-
-            <!-- SEKTION 2: MONTEURE & ARBEITSZEITEN IM BÜRO -->
-            <div class="card" style="border-left: 4px solid var(--primary-color);">
-                <h3>👥 Monteur-Übersicht & Arbeitszeiten</h3>
-                <p style="color: #666; font-size: 0.9em;">Klicke auf den Button, um die Übersicht aller Monteure und deren Arbeitszeiten zu laden und anzuzeigen:</p>
-                <button type="button" class="btn-secondary" style="margin-top: 5px; margin-bottom: 15px;" onclick="toggleBueroSection('monteure')">👥 Monteur-Übersicht anzeigen</button>
-                
-                <div id="bueroMonteureContentWrapper" style="display: none;">
-                    <div id="bueroMonteursList">Lade Monteure...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- NORMALE BERICHTE (Für Monteur & Büro Ansicht) -->
         <div class="card">
-            <h3>Berichte</h3>
-            <p style="color: #666; font-size: 0.9em;">Klicke auf den Button, um die Berichte und Stundenübersichten anzuzeigen:</p>
-            <button type="button" class="btn-primary" style="margin-top: 5px; margin-bottom: 15px;" onclick="toggleBerichteSection()">📄 Berichte anzeigen</button>
-            
+            <h3>📄 Berichte & Auswertungen</h3>
+            <button type="button" class="btn-monatsbericht" onclick="openBerichtTypModal()">📄 Monats- / Wochenbericht erstellen</button>
+            <p style="color: var(--text-muted); font-size: 0.9em;">Erstellen Sie offizielle Berichte als PDF oder schicken Sie sie direkt an das Büro:</p>
+            <button type="button" class="btn-primary" style="margin-top: 10px; margin-bottom: 15px; width: auto; padding: 8px 16px;" onclick="toggleBerichteSection()">📄 Gespeicherte Berichte anzeigen</button>
             <div id="berichteContentWrapper" style="display: none;">
                 <p><strong>Mitarbeiter:</strong> <span id="reportMonteur">-</span></p>
                 <p><strong>Gesamtstunden:</strong> <span id="reportTotalHours" class="badge">0,00 Std.</span></p>
@@ -816,25 +1123,36 @@
         </div>
     </div>
 
-    <!-- BÜRO TAB -->
-    <div id="tab-buero" class="tab-content buero-only">
+    <!-- BÜRO MODUL TAB -->
+    <div id="tab-buero" class="tab-content">
         <div class="card" style="text-align: center;">
-            <h3>🏢 Büro Steuerung & Einstellungen</h3>
+            <h3>🏢 Büro Modul - Übersicht</h3>
+            <p style="color: var(--text-muted); font-size: 0.95em;">Wählen Sie einen Bereich aus:</p>
             
-            <div class="form-group" style="text-align: left; max-width: 400px; margin: 0 auto 20px auto;">
-                <label>Firmenlogo hochladen:</label>
-                <input type="file" id="logoUploadInput" accept="image/*" onchange="handleLogoUpload(event)">
-                <small style="color: #666;">Das Logo wird in der App oben angezeigt.</small>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="dash-card" onclick="openAuftragModal()">
-                    <span class="icon">📝</span>
-                    <span>Neuen Auftrag</span>
+            <div class="dashboard-grid-buero">
+                <div class="dash-card" onclick="openModal('modalBueroManagement')">
+                    <span class="icon">🏢</span>
+                    <span>Büro Management</span>
                 </div>
-                <div class="dash-card" onclick="openModal('modalMonteurErnennen')">
-                    <span class="icon">👥</span>
-                    <span>Monteur ernennen</span>
+                <div class="dash-card" onclick="openModal('modalKundenHaupt')">
+                    <span class="icon">🗂️</span>
+                    <span>Kunden</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalAuftraegeHaupt')">
+                    <span class="icon">📋</span>
+                    <span>Aufträge</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalBueroDokumente')">
+                    <span class="icon">📁</span>
+                    <span>Dokumente / Unterlagen</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalBerichteHaupt')">
+                    <span class="icon">📄</span>
+                    <span>Berichte</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalGalerieHaupt')">
+                    <span class="icon">🖼️</span>
+                    <span>Galerie</span>
                 </div>
             </div>
         </div>
@@ -842,35 +1160,72 @@
 </div>
 
 <script>
-    // --- SUPABASE CONFIGURATION ---
     const SUPABASE_URL = "https://uelqwtaqyyjfdrziktej.supabase.co";    
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbHF3dGFxeXlqZmRyemlrdGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODUwNDMsImV4cCI6MjEwMTc2MTA0M30.uwIM5MqWI7iKOaPFfVyx_RhmKDqBuptvsa5LKSe1FPY";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbHF3dGFxeXlqZmRyemlrdGVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODUwNDMsImV4cCI6MjEwMTc2MTA0M30.uwIM5MqWI7iKOaPFfVyx_RhmKDqBuptvsa5LKSe1FPY";
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // Standard-Fallback Admin-Code (wird jetzt durch registrierte Büros in Supabase erweitert)
     const FALLBACK_BUERO_ADMIN_CODE = "BUERO2026";
 
     let activeSession = JSON.parse(localStorage.getItem('timehero_session')) || null;
     let currentPhotos = [];
     let currentSignature = '';
-    let reportSignature = '';
     let selectedCustomerEmoji = '';
     let globalAllEintraege = []; 
     let globalAllAuftraege = [];
     let globalAllMonteurs = [];
+    let globalAllDokumente = [];
+    let modalHistory = []; 
+    let isSubmittingEntry = false; 
+    
+    let savedKundenStamm = JSON.parse(localStorage.getItem('timehero_kunden_stamm')) || [];
+    savedKundenStamm = savedKundenStamm.map(k => ({
+        name: k.name || '',
+        adresse: k.adresse || k.ort || '',
+        rechnungs_adresse: k.rechnungs_adresse || '',
+        telefon: k.telefon || '',
+        handy: k.handy || '',
+        notiz: k.notiz || '',
+        status: k.status || 'aktiv'
+    }));
+
     let canvas, ctx, isDrawing = false;
-    let reportCanvas, reportCtx, isReportDrawing = false;
+    let monatsCanvas, monatsCtx, isMonatsDrawing = false;
+    
+    let galerieCanvas, galerieCtx, isGalerieDrawing = false;
+    let currentGalerieImageSrc = '';
+    let currentGalerieZoomLevel = 1;
+
     let pendingAdminAction = null; 
     let newlyRegisteredPasswordCache = '';
+    let pendingBueroDeleteId = null;
+    let currentOpenedCustomerFolder = null;
+    let selectedBueroDokumentBase64 = '';
 
     document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. KORRIGIERTE SERVICE WORKER REGISTRIERUNG ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service Worker erfolgreich registriert mit Scope:', reg.scope);
+            }).catch(err => {
+                console.warn('Service Worker Registrierung fehlgeschlagen:', err);
+            });
+        }
+
+        // --- AUTOMATISCHE OFFLINE-SYNCHRONISATION BEI INTERNETVERBINDUNG ---
+        window.addEventListener('online', () => {
+            console.log('Internetverbindung wiederhergestellt. Synchronisiere ausstehende Daten...');
+            syncOfflineDataToSupabase();
+        });
+
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
             if (splash) splash.classList.add('fade-out');
             checkAuth();
             loadGlobalLogo();
-        }, 1500);
+            if (navigator.onLine) {
+                syncOfflineDataToSupabase();
+            }
+        }, 1200);
 
         const datumField = document.getElementById('datum');
         if(datumField) datumField.valueAsDate = new Date();
@@ -879,32 +1234,440 @@
         
         initHoursDropdown();
         initSignaturePad();
-        initReportSignaturePad();
+        initGalerieCanvas();
     });
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    // --- 2. BILDER-KOMPRIMIERUNG VIA HTML CANVAS ---
+    function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.75) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedDataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleImageUpload(e) {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        
+        const preview = document.getElementById('photoPreview');
+        for (let i = 0; i < files.length; i++) {
+            const compressedBase64 = await compressImageFile(files[i]);
+            currentPhotos.push(compressedBase64);
+            
+            const img = document.createElement('img');
+            img.src = compressedBase64;
+            img.className = 'image-preview';
+            preview.appendChild(img);
+        }
+    }
+
+    async function syncOfflineDataToSupabase() {
+        let offlineEntries = JSON.parse(localStorage.getItem('timehero_offline_eintraege')) || [];
+        if (offlineEntries.length === 0) return;
+
+        let remainingEntries = [];
+        for (let entry of offlineEntries) {
+            try {
+                const { error } = await supabaseClient.from('eintraege').insert([entry]);
+                if (error) {
+                    remainingEntries.push(entry);
+                }
+            } catch (err) {
+                remainingEntries.push(entry);
+            }
+        }
+        localStorage.setItem('timehero_offline_eintraege', JSON.stringify(remainingEntries));
+        if (offlineEntries.length !== remainingEntries.length) {
+            loadDataFromServer();
+        }
+    }
+
+    async function saveEntry(e) {
+        e.preventDefault();
+        if (isSubmittingEntry) return;
+        isSubmittingEntry = true;
+
+        const submitBtn = document.getElementById('submitEntryBtn');
+        if (submitBtn) submitBtn.disabled = true;
+
+        const selectKunde = document.getElementById('selectKundeDropdown').value;
+        const kunde = selectKunde === "__NEU__" ? document.getElementById('kundeManuell').value.trim() : selectKunde;
+        const ort = document.getElementById('ort').value.trim();
+        const taetigkeit = document.getElementById('taetigkeit').value.trim();
+        const zeit = document.getElementById('zeit').value;
+        const datum = document.getElementById('datum').value;
+        const auftragId = document.getElementById('selectAuftragZuordnung').value;
+        const kundenFeedbackText = document.getElementById('kundenFeedbackText').value.trim();
+
+        const entryData = {
+            monteur: activeSession ? activeSession.user : 'Mitarbeiter',
+            kunde: kunde,
+            ort: ort,
+            taetigkeit: taetigkeit,
+            zeit: Number(zeit),
+            datum: datum,
+            fotos: currentPhotos,
+            unterschrift: currentSignature,
+            feedback_emoji: selectedCustomerEmoji,
+            feedback_text: kundenFeedbackText,
+            auftrag_id: auftragId || null,
+            created_at: new Date().toISOString()
+        };
+
+        let success = false;
+        if (navigator.onLine) {
+            try {
+                const { error } = await supabaseClient.from('eintraege').insert([entryData]);
+                if (!error) {
+                    success = true;
+                    if (auftragId) {
+                        await supabaseClient.from('auftraege').update({ status: 'erledigt' }).eq('id', auftragId);
+                    }
+                }
+            } catch (err) {
+                success = false;
+            }
+        }
+
+        if (!success) {
+            let offlineEntries = JSON.parse(localStorage.getItem('timehero_offline_eintraege')) || [];
+            offlineEntries.push(entryData);
+            localStorage.setItem('timehero_offline_eintraege', JSON.stringify(offlineEntries));
+
+            globalAllEintraege.push(entryData);
+            alert('⚠️ Keine Internetverbindung erkannt. Eintrag wurde lokal gespeichert und wird bei Verbindung automatisch synchronisiert!');
+        } else {
+            alert('✅ Stundenzettel erfolgreich gespeichert und übertragen!');
+        }
+
+        document.getElementById('entryForm').reset();
+        document.getElementById('photoPreview').innerHTML = '';
+        currentPhotos = [];
+        clearSignature();
+        selectedCustomerEmoji = '';
+        document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+        if(submitBtn) submitBtn.disabled = false;
+        isSubmittingEntry = false;
+        loadDataFromServer();
+        switchTab('home');
+    }
+
+    function openModal(id, saveToHistory = true) {
+        const currentOpen = document.querySelector('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"]');
+        if (currentOpen && currentOpen.id && currentOpen.id !== id && saveToHistory) {
+            if (!modalHistory.includes(currentOpen.id)) {
+                modalHistory.push(currentOpen.id);
+            }
+        }
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        modalHistory = modalHistory.filter(item => item !== id);
+    }
+
+    function goBackModal() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        if (modalHistory.length > 0) {
+            const prevId = modalHistory.pop();
+            const prevModal = document.getElementById(prevId);
+            if (prevModal) {
+                prevModal.style.display = 'flex';
+            }
+        }
+    }
 
     function openAuftragModal() {
         renderAuftragMonteursCheckboxes();
         openModal('modalAuftrag');
     }
 
+    function openMonteurUebersichtModal() {
+        renderBueroMonteurs(globalAllMonteurs);
+        openModal('modalMonteurUebersicht');
+    }
+
+    function openLogoUploadModal() {
+        openModal('modalLogoUpload');
+    }
+
+    function openKundenStammErweitert() {
+        renderKundenStammFolders('', 'alle');
+        openModal('modalKundenStammErweitert');
+    }
+
+    function openAuftragSuchenModal() {
+        openModal('modalAuftragSuchen');
+    }
+
+    function openErledigteAuftraegeModal() {
+        renderErledigteAuftraegeFolder(globalAllAuftraege, globalAllEintraege);
+        openModal('modalErledigteAuftraege');
+    }
+
+    function openEingegangeneAuftraegeModal() {
+        renderBueroFolders(globalAllAuftraege, globalAllMonteurs, globalAllEintraege);
+        openModal('modalEingegangeneAuftraege');
+    }
+
     function renderAuftragMonteursCheckboxes() {
         const container = document.getElementById('auftragMonteursCheckboxContainer');
         if (!container) return;
-
         if (globalAllMonteurs.length === 0) {
-            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Monteure verfügbar. Bitte zuerst Monteure ernennen.</p>';
+            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Monteure verfügbar.</p>';
             return;
         }
-
         container.innerHTML = globalAllMonteurs.map(m => `
             <label class="monteur-checkbox-label">
                 <input type="checkbox" name="auftragMonteurCheck" value="${escapeHtml(m.name)}">
                 ${escapeHtml(m.name)}
             </label>
         `).join('');
+    }
+
+    function renderBueroDokumentMonteurCheckboxes() {
+        const container = document.getElementById('bueroDokumentMonteursContainer');
+        if (!container) return;
+        if (globalAllMonteurs.length === 0) {
+            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Monteure verfügbar.</p>';
+            return;
+        }
+        container.innerHTML = globalAllMonteurs.map(m => `
+            <label class="monteur-checkbox-label">
+                <input type="checkbox" name="bueroDokumentMonteurCheck" value="${escapeHtml(m.name)}">
+                ${escapeHtml(m.name)}
+            </label>
+        `).join('');
+    }
+
+    async function handleBueroDokumentFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.type.startsWith('image/')) {
+            selectedBueroDokumentBase64 = await compressImageFile(file, 1200, 1200, 0.8);
+        } else {
+            const reader = new FileReader();
+            reader.onload = ev => {
+                selectedBueroDokumentBase64 = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function saveAndForwardDokument(e) {
+        e.preventDefault();
+        const checked = document.querySelectorAll('input[name="bueroDokumentMonteurCheck"]:checked');
+        if (checked.length === 0) {
+            alert('Bitte wählen Sie mindestens einen Monteur aus!');
+            return;
+        }
+        const titel = document.getElementById('bueroDokumentTitel').value.trim();
+        if (!selectedBueroDokumentBase64) {
+            alert('Bitte wählen Sie eine Datei aus.');
+            return;
+        }
+
+        const empfaengerList = Array.from(checked).map(cb => cb.value);
+        const newDoc = {
+            titel: titel,
+            datei: selectedBueroDokumentBase64,
+            empfaenger: empfaengerList,
+            datum: new Date().toLocaleDateString('de-DE')
+        };
+
+        const { error } = await supabaseClient.from('dokumente').insert([newDoc]);
+        if (error) {
+            let localDocs = JSON.parse(localStorage.getItem('timehero_dokumente')) || [];
+            newDoc.id = Date.now();
+            localDocs.push(newDoc);
+            localStorage.setItem('timehero_dokumente', JSON.stringify(localDocs));
+        }
+
+        alert(`Dokument erfolgreich an ${empfaengerList.length} Monteur(e) weitergeleitet!`);
+        document.getElementById('bueroDokumentForm').reset();
+        selectedBueroDokumentBase64 = '';
+        loadDataFromServer();
+    }
+
+    async function renderBueroGesendeteDokumenteList() {
+        const container = document.getElementById('bueroGesendeteDokumenteList');
+        if (!container) return;
+        if (globalAllDokumente.length === 0) {
+            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Dokumente vorhanden.</p>';
+            return;
+        }
+        container.innerHTML = globalAllDokumente.map(d => `
+            <div class="entry-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div>
+                    <strong>📁 ${escapeHtml(d.titel)}</strong><br>
+                    <small style="color:var(--text-muted);">Empfänger: ${Array.isArray(d.empfaenger) ? d.empfaenger.join(', ') : d.empfaenger} | ${d.datum || ''}</small>
+                </div>
+                <button type="button" class="btn-danger" style="width:auto; padding:6px 10px; font-size:0.8em;" onclick="deleteBueroDokument(${d.id})">Löschen</button>
+            </div>
+        `).join('');
+    }
+
+    async function deleteBueroDokument(id) {
+        if (!id) return;
+        const { error } = await supabaseClient.from('dokumente').delete().eq('id', id);
+        if (error) {
+            let localDocs = JSON.parse(localStorage.getItem('timehero_dokumente')) || [];
+            localDocs = localDocs.filter(d => d.id !== id);
+            localStorage.setItem('timehero_dokumente', JSON.stringify(localDocs));
+        }
+        loadDataFromServer();
+    }
+
+    function renderMonteurDokumenteList() {
+        const container = document.getElementById('monteurDokumenteList');
+        if (!container || !activeSession) return;
+        const myDocs = globalAllDokumente.filter(d => {
+            if (Array.isArray(d.empfaenger)) return d.empfaenger.includes(activeSession.user);
+            return d.empfaenger === activeSession.user;
+        });
+        if (myDocs.length === 0) {
+            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Dokumente für Sie vorhanden.</p>';
+            return;
+        }
+        container.innerHTML = myDocs.map(d => `
+            <div class="entry-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <strong>📁 ${escapeHtml(d.titel)}</strong><br>
+                    <small style="color:var(--text-muted);">Datum: ${d.datum || ''}</small>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <a href="${d.datei}" download="${d.titel}" class="btn-primary" style="text-decoration:none; display:inline-block; padding:6px 12px; font-size:0.85em; text-align:center;">💾 Auf Gerät speichern</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function initGalerieCanvas() {
+        galerieCanvas = document.getElementById('galerieDrawCanvas');
+        if (!galerieCanvas) return;
+        galerieCtx = galerieCanvas.getContext('2d');
+
+        function resizeGalerieCanvas() {
+            const img = document.getElementById('galerieDetailImage');
+            if (!img) return;
+            galerieCanvas.width = img.clientWidth || 400;
+            galerieCanvas.height = img.clientHeight || 300;
+            galerieCtx.lineWidth = 3;
+            galerieCtx.lineCap = 'round';
+            galerieCtx.strokeStyle = '#ef4444';
+        }
+
+        const imgEl = document.getElementById('galerieDetailImage');
+        if(imgEl) imgEl.onload = resizeGalerieCanvas;
+
+        function getPos(e) {
+            const r = galerieCanvas.getBoundingClientRect();
+            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
+        }
+        function start(e) { isGalerieDrawing = true; const p = getPos(e); galerieCtx.beginPath(); galerieCtx.moveTo(p.x, p.y); if(e.touches) e.preventDefault(); }
+        function draw(e) { if(!isGalerieDrawing) return; const p = getPos(e); galerieCtx.lineTo(p.x, p.y); galerieCtx.stroke(); if(e.touches) e.preventDefault(); }
+        function stop() { isGalerieDrawing = false; }
+
+        galerieCanvas.addEventListener('mousedown', start); galerieCanvas.addEventListener('mousemove', draw); galerieCanvas.addEventListener('mouseup', stop);
+        galerieCanvas.addEventListener('touchstart', start, {passive: false}); galerieCanvas.addEventListener('touchmove', draw, {passive: false}); galerieCanvas.addEventListener('touchend', stop);
+    }
+
+    function openGalerieDetailModal(imgSrc, captionText) {
+        currentGalerieImageSrc = imgSrc;
+        currentGalerieZoomLevel = 1;
+        const imgEl = document.getElementById('galerieDetailImage');
+        imgEl.src = imgSrc;
+        imgEl.style.transform = 'scale(1)';
+        document.getElementById('galerieDetailTitle').textContent = `🖼️ Bild: ${captionText || 'Details'}`;
+        
+        const extBtn = document.getElementById('galerieOpenExternalBtn');
+        if (extBtn) {
+            try {
+                const blob = dataURLToBlob(imgSrc);
+                const blobUrl = URL.createObjectURL(blob);
+                extBtn.href = blobUrl;
+            } catch(err) {
+                extBtn.href = imgSrc;
+            }
+        }
+
+        clearGalerieCanvas();
+        openModal('modalGalerieDetail');
+        setTimeout(() => {
+            if(galerieCanvas && imgEl) {
+                galerieCanvas.width = imgEl.clientWidth;
+                galerieCanvas.height = imgEl.clientHeight;
+            }
+        }, 150);
+    }
+
+    function zoomGalerieImage(delta) {
+        currentGalerieZoomLevel = Math.max(1, Math.min(3, currentGalerieZoomLevel + delta));
+        const imgEl = document.getElementById('galerieDetailImage');
+        if(imgEl) imgEl.style.transform = `scale(${currentGalerieZoomLevel})`;
+    }
+
+    function clearGalerieCanvas() {
+        if(!galerieCtx || !galerieCanvas) return;
+        galerieCtx.clearRect(0, 0, galerieCanvas.width, galerieCanvas.height);
+    }
+
+    function saveGalerieDrawing() {
+        const imgEl = document.getElementById('galerieDetailImage');
+        if (!imgEl) return;
+        const canvasCombined = document.createElement('canvas');
+        canvasCombined.width = imgEl.naturalWidth || imgEl.width;
+        canvasCombined.height = imgEl.naturalHeight || imgEl.height;
+        const cCtx = canvasCombined.getContext('2d');
+        
+        const tempImg = new Image();
+        tempImg.crossOrigin = "anonymous";
+        tempImg.onload = () => {
+            cCtx.drawImage(tempImg, 0, 0, canvasCombined.width, canvasCombined.height);
+            cCtx.drawImage(galerieCanvas, 0, 0, canvasCombined.width, canvasCombined.height);
+            const dataUrl = canvasCombined.toDataURL('image/png');
+            const blob = dataURLToBlob(dataUrl);
+            triggerUniversalDownload(blob, `bearbeitetes_bild_${Date.now()}.png`);
+            alert('Bearbeitetes Bild erfolgreich auf Gerät gespeichert!');
+        };
+        tempImg.src = currentGalerieImageSrc;
+    }
+
+    function dataURLToBlob(dataurl) {
+        let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--) { u8arr[n] = bstr.charCodeAt(n); }
+        return new Blob([u8arr], {type:mime});
     }
 
     function initHoursDropdown() {
@@ -934,52 +1697,21 @@
         canvas = document.getElementById('signaturePad');
         if (!canvas) return;
         ctx = canvas.getContext('2d');
-        
         const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width || 300; 
-        canvas.height = rect.height || 120;
-        
-        ctx.lineWidth = 2; 
-        ctx.lineCap = 'round'; 
-        ctx.strokeStyle = '#000';
+        canvas.width = rect.width || 350; 
+        canvas.height = rect.height || 130;
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b';
 
         function getPos(e) {
             const r = canvas.getBoundingClientRect();
-            return { 
-                x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, 
-                y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top 
-            };
+            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
         }
+        function start(e) { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); if(e.touches) e.preventDefault(); }
+        function draw(e) { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); if(e.touches) e.preventDefault(); }
+        function stop() { if(isDrawing) { isDrawing = false; currentSignature = canvas.toDataURL('image/png'); } }
 
-        function start(e) { 
-            isDrawing = true; 
-            const p = getPos(e); 
-            ctx.beginPath(); 
-            ctx.moveTo(p.x, p.y); 
-            if(e.touches) e.preventDefault(); 
-        }
-
-        function draw(e) { 
-            if(!isDrawing) return; 
-            const p = getPos(e); 
-            ctx.lineTo(p.x, p.y); 
-            ctx.stroke(); 
-            if(e.touches) e.preventDefault(); 
-        }
-
-        function stop() { 
-            if(isDrawing) { 
-                isDrawing = false; 
-                currentSignature = canvas.toDataURL('image/png'); 
-            } 
-        }
-
-        canvas.addEventListener('mousedown', start); 
-        canvas.addEventListener('mousemove', draw); 
-        canvas.addEventListener('mouseup', stop);
-        canvas.addEventListener('touchstart', start, {passive: false}); 
-        canvas.addEventListener('touchmove', draw, {passive: false}); 
-        canvas.addEventListener('touchend', stop);
+        canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stop);
     }
 
     function clearSignature() {
@@ -988,62 +1720,208 @@
         currentSignature = '';
     }
 
-    function initReportSignaturePad() {
-        reportCanvas = document.getElementById('reportSignaturePad');
-        if (!reportCanvas) return;
-        reportCtx = reportCanvas.getContext('2d');
-        
-        const rect = reportCanvas.getBoundingClientRect();
-        reportCanvas.width = rect.width || 300; 
-        reportCanvas.height = rect.height || 100;
-        
-        reportCtx.lineWidth = 2; 
-        reportCtx.lineCap = 'round'; 
-        reportCtx.strokeStyle = '#000';
+    function initMonatsSigPad() {
+        monatsCanvas = document.getElementById('monatsSigPad');
+        if (!monatsCanvas) return;
+        monatsCtx = monatsCanvas.getContext('2d');
+        const rect = monatsCanvas.getBoundingClientRect();
+        monatsCanvas.width = rect.width || 300;
+        monatsCanvas.height = rect.height || 70;
+        monatsCtx.lineWidth = 2; monatsCtx.lineCap = 'round'; monatsCtx.strokeStyle = '#1e293b';
 
         function getPos(e) {
-            const r = reportCanvas.getBoundingClientRect();
-            return { 
-                x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, 
-                y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top 
-            };
+            const r = monatsCanvas.getBoundingClientRect();
+            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
         }
+        function start(e) { isMonatsDrawing = true; const p = getPos(e); monatsCtx.beginPath(); monatsCtx.moveTo(p.x, p.y); if(e.touches) e.preventDefault(); }
+        function draw(e) { if(!isMonatsDrawing) return; const p = getPos(e); monatsCtx.lineTo(p.x, p.y); monatsCtx.stroke(); if(e.touches) e.preventDefault(); }
+        function stop() { isMonatsDrawing = false; }
 
-        function start(e) { 
-            isReportDrawing = true; 
-            const p = getPos(e); 
-            reportCtx.beginPath(); 
-            reportCtx.moveTo(p.x, p.y); 
-            if(e.touches) e.preventDefault(); 
-        }
-
-        function draw(e) { 
-            if(!isReportDrawing) return; 
-            const p = getPos(e); 
-            reportCtx.lineTo(p.x, p.y); 
-            reportCtx.stroke(); 
-            if(e.touches) e.preventDefault(); 
-        }
-
-        function stop() { 
-            if(isReportDrawing) { 
-                isReportDrawing = false; 
-                reportSignature = reportCanvas.toDataURL('image/png'); 
-            } 
-        }
-
-        reportCanvas.addEventListener('mousedown', start); 
-        reportCanvas.addEventListener('mousemove', draw); 
-        reportCanvas.addEventListener('mouseup', stop);
-        reportCanvas.addEventListener('touchstart', start, {passive: false}); 
-        reportCanvas.addEventListener('touchmove', draw, {passive: false}); 
-        reportCanvas.addEventListener('touchend', stop);
+        monatsCanvas.addEventListener('mousedown', start); monatsCanvas.addEventListener('mousemove', draw); monatsCanvas.addEventListener('mouseup', stop);
+        monatsCanvas.addEventListener('touchstart', start, {passive: false}); monatsCanvas.addEventListener('touchmove', draw, {passive: false}); monatsCanvas.addEventListener('touchend', stop);
     }
 
-    function clearReportSignature() {
-        if(!reportCtx) return;
-        reportCtx.clearRect(0, 0, reportCanvas.width, reportCanvas.height);
-        reportSignature = '';
+    function clearMonatsSig() {
+        if(!monatsCtx) return;
+        monatsCtx.clearRect(0, 0, monatsCanvas.width, monatsCanvas.height);
+    }
+
+    function openBerichtTypModal() {
+        openModal('modalBerichtTypWahl');
+    }
+
+    function wähleBerichtMitMonteur(typ) {
+        const select = document.getElementById('selectBerichtMonteurWahl');
+        const targetMonteur = (select && select.value) ? select.value : (activeSession ? activeSession.user : 'Mitarbeiter');
+        closeModal('modalBerichteHaupt');
+        if (typ === 'woche') {
+            generateWochenBericht(targetMonteur);
+        } else {
+            generateMonatsBericht(targetMonteur);
+        }
+    }
+
+    function selectBerichtTyp(typ) {
+        closeModal('modalBerichtTypWahl');
+        const targetMonteur = activeSession ? activeSession.user : 'Mitarbeiter';
+        if (typ === 'woche') {
+            generateWochenBericht(targetMonteur);
+        } else {
+            generateMonatsBericht(targetMonteur);
+        }
+    }
+
+    function getWeekNumber(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        return { year: d.getUTCFullYear(), week: weekNo };
+    }
+
+    function generateWochenBericht(targetMonteur) {
+        document.getElementById('wochenBerichtMonteur').textContent = targetMonteur;
+        const now = new Date();
+        document.getElementById('wochenBerichtDatumHeader').textContent = now.toLocaleDateString('de-DE');
+        document.getElementById('wochenBerichtZeitraum').textContent = `Aktuelle Woche (${now.toLocaleDateString('de-DE')})`;
+
+        const savedLogo = localStorage.getItem('timehero_logo');
+        const logoImg = document.getElementById('wochenBerichtLogo');
+        if (savedLogo && logoImg) {
+            logoImg.src = savedLogo;
+            logoImg.style.display = 'block';
+        }
+        const logoFooterImg = document.getElementById('wochenBerichtLogoFooter');
+        if (savedLogo && logoFooterImg) {
+            logoFooterImg.src = savedLogo;
+            logoFooterImg.style.display = 'block';
+        }
+
+        const entries = globalAllEintraege.filter(e => e.monteur === targetMonteur);
+        const tbody = document.getElementById('wochenBerichtTableBody');
+        let total = 0;
+
+        if (entries.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Keine Stundeneinträge vorhanden.</td></tr>`;
+        } else {
+            tbody.innerHTML = entries.map(e => {
+                total += Number(e.zeit || 0);
+                return `
+                    <tr>
+                        <td>${e.datum || '-'}</td>
+                        <td>${escapeHtml(e.kunde || '-')}<br><small style="color:var(--text-muted);">${escapeHtml(e.ort || '')}</small></td>
+                        <td>${escapeHtml(e.taetigkeit || '-')}</td>
+                        <td style="text-align: right; font-weight: bold;">${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('wochenBerichtTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        openModal('modalWochenBericht');
+    }
+
+    function generateMonatsBericht(targetMonteur) {
+        document.getElementById('monatsBerichtMonteur').textContent = targetMonteur;
+        const now = new Date();
+        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+        document.getElementById('monatsBerichtDatumHeader').textContent = now.toLocaleDateString('de-DE');
+        document.getElementById('monatsBerichtZeitraum').textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+        const savedLogo = localStorage.getItem('timehero_logo');
+        const logoImg = document.getElementById('monatsBerichtLogo');
+        if (savedLogo && logoImg) {
+            logoImg.src = savedLogo;
+            logoImg.style.display = 'block';
+        }
+
+        const entries = globalAllEintraege.filter(e => e.monteur === targetMonteur);
+        
+        let weeksMap = {};
+        entries.forEach(e => {
+            if (!e.datum) return;
+            const d = new Date(e.datum);
+            const wkInfo = getWeekNumber(d);
+            const wkKey = `KW ${wkInfo.week} (${wkInfo.year})`;
+            if (!weeksMap[wkKey]) {
+                weeksMap[wkKey] = { total: 0, items: [] };
+            }
+            weeksMap[wkKey].total += Number(e.zeit || 0);
+            weeksMap[wkKey].items.push(e.taetigkeit);
+        });
+
+        const wochenTbody = document.getElementById('monatsBerichtWochenTableBody');
+        const keys = Object.keys(weeksMap);
+        if (keys.length === 0) {
+            wochenTbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Keine Wochendaten im Berichtsmonat.</td></tr>`;
+        } else {
+            wochenTbody.innerHTML = keys.map(k => `
+                <tr>
+                    <td><strong>${k}</strong></td>
+                    <td><small>${escapeHtml(weeksMap[k].items.join('; '))}</small></td>
+                    <td style="text-align: right; font-weight: bold;">${weeksMap[k].total.toFixed(2).replace('.', ',')} Std.</td>
+                </tr>
+            `).join('');
+        }
+
+        const detailsTbody = document.getElementById('monatsBerichtDetailsTableBody');
+        let total = 0;
+        if (entries.length === 0) {
+            detailsTbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Keine Einträge vorhanden.</td></tr>`;
+        } else {
+            detailsTbody.innerHTML = entries.map(e => {
+                total += Number(e.zeit || 0);
+                return `
+                    <tr>
+                        <td>${e.datum || '-'}</td>
+                        <td>${escapeHtml(e.kunde || '-')}<br><small style="color:var(--text-muted);">${escapeHtml(e.ort || '')}</small></td>
+                        <td>${escapeHtml(e.taetigkeit || '-')}</td>
+                        <td style="text-align: right; font-weight: bold;">${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('monatsBerichtTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        openModal('modalMonatsBericht');
+        setTimeout(() => initMonatsSigPad(), 150);
+    }
+
+    function speichereBerichtLokal(berichtTyp) {
+        const monteurName = activeSession ? activeSession.user : 'Mitarbeiter';
+        const modalId = berichtTyp === 'Wochenbericht' ? 'modalWochenBericht' : 'modalMonatsBericht';
+        const modalElement = document.getElementById(modalId);
+        
+        if (!modalElement) return;
+
+        const reportContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${berichtTyp} - ${monteurName}</title><style>body{font-family:sans-serif;padding:20px;color:#111;}table{width:100%;border-collapse:collapse;margin-top:15px;}th,td{border:1px solid #ccc;padding:8px;text-align:left;}th{background:#f1f5f9;}</style></head><body>` + modalElement.querySelector('.a4-report-page').innerHTML + `</body></html>`;
+        
+        const blob = new Blob([reportContent], { type: 'text/html;charset=utf-8' });
+        const filename = `${berichtTyp}_${monteurName}_${new Date().toISOString().slice(0, 10)}.html`;
+        triggerUniversalDownload(blob, filename);
+        alert(`${berichtTyp} wurde erfolgreich lokal gespeichert!`);
+    }
+
+    async function sendeBerichtAnsBuero(berichtTyp) {
+        const monteurName = activeSession ? activeSession.user : 'Mitarbeiter';
+        const nowStr = new Date().toLocaleDateString('de-DE');
+        const reportData = {
+            monteur: monteurName,
+            typ: berichtTyp,
+            datum: nowStr,
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient.from('berichte').insert([reportData]);
+        if (error) {
+            let localBerichte = JSON.parse(localStorage.getItem('timehero_gesendete_berichte')) || [];
+            localBerichte.push(reportData);
+            localStorage.setItem('timehero_gesendete_berichte', JSON.stringify(localBerichte));
+        }
+
+        alert(`✅ ${berichtTyp} wurde erfolgreich an das Büro verschickt!`);
+        closeModal(berichtTyp === 'Wochenbericht' ? 'modalWochenBericht' : 'modalMonatsBericht');
+        loadDataFromServer();
     }
 
     function checkAuth() {
@@ -1077,37 +1955,25 @@
     function generateRandomPassword() {
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
         let pass = "";
-        for (let i = 0; i < 8; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
+        for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
         return pass;
     }
 
     async function registerBuero() {
         const email = document.getElementById('bueroRegEmail').value.trim();
         if (!email || !email.includes('@')) {
-            alert('Bitte gib eine gültige E-Mail-Adresse für das Büro ein.');
+            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
             return;
         }
-
         const generatedPass = generateRandomPassword();
-
-        // Speichern in Supabase Tabelle 'bueros' (sicherstellen, dass diese Tabelle existiert oder via upsert)
-        const { error } = await supabaseClient
-            .from('bueros')
-            .upsert([{ email: email, password: generatedPass }], { onConflict: ['email'] });
-
-        if (error) {
-            alert('Fehler bei der Registrierung: ' + error.message + '\n(Hinweis: Bitte stelle sicher, dass die Tabelle "bueros" mit den Spalten "email" und "password" in Supabase existiert.)');
-            return;
-        }
+        const { error } = await supabaseClient.from('bueros').upsert([{ email: email, password: generatedPass }], { onConflict: ['email'] });
+        if (error) { alert('Fehler bei Registrierung: ' + error.message); return; }
 
         newlyRegisteredPasswordCache = generatedPass;
         document.getElementById('bueroEmail').value = email;
         document.getElementById('generatedPasswordDisplay').value = generatedPass;
-        
         document.getElementById('authModal').style.display = 'none';
-        openModal('modalGeneratedPassword');
+        openModal('modalGeneratedPassword', false);
     }
 
     function closeGeneratedPasswordModal() {
@@ -1120,13 +1986,8 @@
     async function loginBuero() {
         const email = document.getElementById('bueroEmail').value.trim();
         const code = document.getElementById('bueroCode').value.trim();
+        if (!email || !code) { alert('Bitte E-Mail und Passwort eingeben.'); return; }
 
-        if (!email || !code) {
-            alert('Bitte E-Mail und Passwort eingeben.');
-            return;
-        }
-
-        // Prüfen gegen Fallback Code ODER Datenbank-Büros
         if (code === FALLBACK_BUERO_ADMIN_CODE) {
             activeSession = { role: 'buero', user: email };
             localStorage.setItem('timehero_session', JSON.stringify(activeSession));
@@ -1134,17 +1995,8 @@
             return;
         }
 
-        const { data, error } = await supabaseClient
-            .from('bueros')
-            .select('*')
-            .eq('email', email)
-            .eq('password', code)
-            .single();
-
-        if (error || !data) {
-            alert('Anmeldung fehlgeschlagen. E-Mail oder Passwort falsch.');
-            return;
-        }
+        const { data, error } = await supabaseClient.from('bueros').select('*').eq('email', email).eq('password', code).single();
+        if (error || !data) { alert('Anmeldung fehlgeschlagen. E-Mail oder Passwort falsch.'); return; }
 
         activeSession = { role: 'buero', user: email };
         localStorage.setItem('timehero_session', JSON.stringify(activeSession));
@@ -1154,23 +2006,10 @@
     async function loginMonteur() {
         const user = document.getElementById('monteurUser').value.trim();
         const pass = document.getElementById('monteurPassword').value.trim();
+        if(!user || !pass) { alert('Bitte Name und Passwort eingeben.'); return; }
 
-        if(!user || !pass) { 
-            alert('Bitte Name und Passwort eingeben.'); 
-            return; 
-        }
-
-        const { data, error } = await supabaseClient
-            .from('monteurs')
-            .select('*')
-            .eq('name', user)
-            .eq('password', pass)
-            .single();
-
-        if (error || !data) {
-            alert('Zugriff verweigert! Entweder existiert kein Monteur mit diesem Namen, das Passwort ist falsch oder du wurdest noch nicht vom Büro ernannt.');
-            return;
-        }
+        const { data, error } = await supabaseClient.from('monteurs').select('*').eq('name', user).eq('password', pass).single();
+        if (error || !data) { alert('Zugriff verweigert!'); return; }
 
         activeSession = { role: 'monteur', user: user };
         localStorage.setItem('timehero_session', JSON.stringify(activeSession));
@@ -1180,15 +2019,14 @@
     function applySessionRole() {
         document.getElementById('currentUserDisplay').textContent = activeSession.user;
         document.getElementById('currentRoleDisplay').textContent = activeSession.role === 'buero' ? 'Büro' : 'Monteur';
+        document.querySelectorAll('.buero-only').forEach(el => el.style.setProperty('display', activeSession.role === 'buero' ? 'block' : 'none', 'important'));
+        document.querySelectorAll('.monteur-only').forEach(el => el.style.setProperty('display', activeSession.role === 'monteur' ? 'block' : 'none', 'important'));
         
-        document.querySelectorAll('.buero-only').forEach(el => {
-            el.style.setProperty('display', activeSession.role === 'buero' ? 'block' : 'none', 'important');
-        });
-
-        document.querySelectorAll('.monteur-only').forEach(el => {
-            el.style.setProperty('display', activeSession.role === 'monteur' ? 'block' : 'none', 'important');
-        });
-
+        if (activeSession.role === 'buero') {
+            switchTab('buero');
+        } else {
+            switchTab('home');
+        }
         loadDataFromServer();
     }
 
@@ -1201,138 +2039,50 @@
     async function verifyAdminCode(code) {
         if (code === FALLBACK_BUERO_ADMIN_CODE) return true;
         if (activeSession && activeSession.role === 'buero') {
-            const { data } = await supabaseClient
-                .from('bueros')
-                .select('*')
-                .eq('email', activeSession.user)
-                .eq('password', code)
-                .single();
+            const { data } = await supabaseClient.from('bueros').select('*').eq('email', activeSession.user).eq('password', code).single();
             if (data) return true;
         }
         return false;
     }
 
-    function requestAdminAction(actionType, monteurName) {
-        pendingAdminAction = { type: actionType, name: monteurName };
-        document.getElementById('adminCheckCode').value = '';
-        document.getElementById('adminCheckActionText').textContent = `Passwort eingeben, um Monteur "${monteurName}" zu ${actionType === 'edit' ? 'bearbeiten' : 'löschen'}:`;
-        openModal('modalAdminCheck');
-    }
-
-    async function confirmAdminAction() {
-        const code = document.getElementById('adminCheckCode').value.trim();
-        const isValid = await verifyAdminCode(code);
-        if (!isValid) {
-            alert('Falscher Code!');
-            return;
-        }
-        closeModal('modalAdminCheck');
-        
-        if (pendingAdminAction) {
-            if (pendingAdminAction.type === 'edit') {
-                document.getElementById('editMonteurOldName').value = pendingAdminAction.name;
-                document.getElementById('editMonteurName').value = pendingAdminAction.name;
-                document.getElementById('editMonteurPass').value = '';
-                openModal('modalEditMonteur');
-            } else if (pendingAdminAction.type === 'delete') {
-                executeDeleteMonteur(pendingAdminAction.name);
-            }
-        }
-        pendingAdminAction = null;
-    }
-
-    async function saveEditedMonteur(e) {
-        e.preventDefault();
-        const oldName = document.getElementById('editMonteurOldName').value;
-        const newName = document.getElementById('editMonteurName').value.trim();
-        const newPass = document.getElementById('editMonteurPass').value.trim();
-
-        const { error } = await supabaseClient
-            .from('monteurs')
-            .update({ name: newName, password: newPass })
-            .eq('name', oldName);
-
-        if (error) {
-            alert('Fehler beim Aktualisieren: ' + error.message);
-            return;
-        }
-
-        alert('Monteur erfolgreich aktualisiert!');
-        closeModal('modalEditMonteur');
-        loadDataFromServer();
-    }
-
-    async function executeDeleteMonteur(monteurName) {
-        const { error } = await supabaseClient
-            .from('monteurs')
-            .delete()
-            .eq('name', monteurName);
-
-        if (error) {
-            alert('Fehler beim Löschen: ' + error.message);
-            return;
-        }
-
-        alert(`Monteur "${monteurName}" wurde gelöscht.`);
-        loadDataFromServer();
-    }
-
-    function handleLogoUpload(e) {
+    async function handleLogoUpload(e) {
         const file = e.target.files[0];
         if(!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            const base64Logo = ev.target.result;
-            localStorage.setItem('timehero_logo', base64Logo);
-            displayLogo(base64Logo);
-            alert('Firmenlogo erfolgreich aktualisiert!');
-        };
-        reader.readAsDataURL(file);
+        const compressedLogo = await compressImageFile(file, 600, 300, 0.85);
+        localStorage.setItem('timehero_logo', compressedLogo);
+        displayLogo(compressedLogo);
+        alert('Firmenlogo erfolgreich aktualisiert!');
+        closeModal('modalLogoUpload');
     }
 
     function loadGlobalLogo() {
         const savedLogo = localStorage.getItem('timehero_logo');
-        if (savedLogo) {
-            displayLogo(savedLogo);
-        }
+        if (savedLogo) displayLogo(savedLogo);
     }
 
     function displayLogo(src) {
         const logoImg = document.getElementById('appLogo');
-        if(logoImg) {
-            logoImg.src = src;
-            logoImg.style.display = 'block';
-        }
+        if(logoImg) { logoImg.src = src; logoImg.style.display = 'block'; }
     }
 
     async function saveAuftrag(e) {
         e.preventDefault();
-        
         const checkedBoxes = document.querySelectorAll('input[name="auftragMonteurCheck"]:checked');
-        if (checkedBoxes.length === 0) {
-            alert('Bitte wähle mindestens einen Monteur aus!');
-            return;
-        }
+        if (checkedBoxes.length === 0) { alert('Bitte wählen Sie mindestens einen Monteur aus!'); return; }
 
         const kunde = document.getElementById('auftragKunde').value;
         const ort = document.getElementById('auftragOrt').value;
         const beschreibung = document.getElementById('auftragBeschreibung').value;
         const termin = document.getElementById('auftragTermin').value;
+        const uhrzeit = document.getElementById('auftragUhrzeit').value;
 
         const auftraegeToInsert = Array.from(checkedBoxes).map(cb => ({
-            kunde: kunde,
-            ort: ort,
-            beschreibung: beschreibung,
-            monteur: cb.value,
-            termin: termin,
-            status: 'offen'
+            kunde: kunde, ort: ort, beschreibung: beschreibung, monteur: cb.value, termin: termin, uhrzeit: uhrzeit,
+            status: 'offen', delete_monteur: false, delete_buero: false
         }));
 
         const { error } = await supabaseClient.from('auftraege').insert(auftraegeToInsert);
-        if(error) { 
-            alert('Fehler beim Speichern der Aufträge: ' + error.message); 
-            return; 
-        }
+        if(error) { alert('Fehler: ' + error.message); return; }
 
         alert(`Auftrag erfolgreich für ${auftraegeToInsert.length} Monteur(e) gespeichert!`);
         document.getElementById('auftragForm').reset();
@@ -1343,984 +2093,8 @@
     function populateAuftragDropdown(auftraege) {
         const select = document.getElementById('selectAuftragZuordnung');
         if (!select) return;
-        
-        const offeneAuftraege = auftraege.filter(a => a.monteur === activeSession.user && a.status === 'offen');
-        
-        select.innerHTML = '<option value="">-- Keinen Auftrag auswählen (freier / selbst erstellter Eintrag) --</option>';
-        offeneAuftraege.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id;
-            opt.textContent = `Kunde: ${a.kunde} (${a.ort}) - ${a.termin}`;
-            select.appendChild(opt);
-        });
-    }
-
-    // --- KUNDEN AUSWAHL & AUTOMATISCHE ORTSBEFÜLLUNG LOGIK ---
-    let customerToLocationMap = {};
-
-    function populateCustomerDropdown() {
-        const select = document.getElementById('selectKundeDropdown');
-        if (!select) return;
-
-        customerToLocationMap = {};
-        
-        if (globalAllAuftraege) {
-            globalAllAuftraege.forEach(a => {
-                if (a.kunde && a.ort) {
-                    customerToLocationMap[a.kunde.trim()] = a.ort.trim();
-                }
-            });
-        }
-        if (globalAllEintraege) {
-            globalAllEintraege.forEach(e => {
-                if (e.kunde && e.ort) {
-                    customerToLocationMap[e.kunde.trim()] = e.ort.trim();
-                }
-            });
-        }
-
-        const sortedCustomers = Object.keys(customerToLocationMap).sort();
-
-        select.innerHTML = '<option value="">-- Neuen Kunden eingeben oder wählen --</option>';
-        sortedCustomers.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            select.appendChild(opt);
-        });
-        const optNew = document.createElement('option');
-        optNew.value = "__NEU__";
-        optNew.textContent = "➕ Anderen / Neuen Kunden eingeben...";
-        select.appendChild(optNew);
-    }
-
-    function handleCustomerDropdownChange() {
-        const select = document.getElementById('selectKundeDropdown');
-        const manualGroup = document.getElementById('manualKundeGroup');
-        const ortInput = document.getElementById('ort');
-        
-        const val = select.value;
-        if (val === "__NEU__") {
-            manualGroup.style.display = 'block';
-            document.getElementById('kundeManuell').value = '';
-            document.getElementById('kundeManuell').required = true;
-            ortInput.value = '';
-        } else if (val) {
-            manualGroup.style.display = 'none';
-            document.getElementById('kundeManuell').required = false;
-            if (customerToLocationMap[val]) {
-                ortInput.value = customerToLocationMap[val];
-            }
-        } else {
-            manualGroup.style.display = 'none';
-            document.getElementById('kundeManuell').required = false;
-            ortInput.value = '';
-        }
-    }
-
-    function fillFromAuftragSelection() {
-        const selectId = document.getElementById('selectAuftragZuordnung').value;
-        if (!selectId) return;
-
-        const found = globalAllAuftraege.find(a => String(a.id) === String(selectId));
-        if (found) {
-            const kundeVal = found.kunde || '';
-            const ortVal = found.ort || '';
-            
-            const custSelect = document.getElementById('selectKundeDropdown');
-            let foundInDropdown = false;
-            for (let i = 0; i < custSelect.options.length; i++) {
-                if (custSelect.options[i].value.toLowerCase() === kundeVal.toLowerCase()) {
-                    custSelect.selectedIndex = i;
-                    foundInDropdown = true;
-                    break;
-                }
-            }
-            if (!foundInDropdown) {
-                custSelect.value = "__NEU__";
-                document.getElementById('manualKundeGroup').style.display = 'block';
-                document.getElementById('kundeManuell').value = kundeVal;
-            } else {
-                document.getElementById('manualKundeGroup').style.display = 'none';
-            }
-
-            document.getElementById('ort').value = ortVal;
-            document.getElementById('taetigkeit').value = found.beschreibung || '';
-        }
-    }
-
-    async function saveMonteurCredential(e) {
-        e.preventDefault();
-        const name = document.getElementById('newMonteurName').value.trim();
-        const password = document.getElementById('newMonteurPass').value.trim();
-
-        const { error } = await supabaseClient
-            .from('monteurs')
-            .upsert([{ name, password }], { onConflict: ['name'] });
-
-        if(error) {
-            alert('Fehler beim Speichern des Monteurs: ' + error.message);
-            return;
-        }
-
-        alert(`Monteur "${name}" erfolgreich ernannt und Passwort vergeben!`);
-        document.getElementById('ernennenForm').reset();
-        closeModal('modalMonteurErnennen');
-        loadDataFromServer();
-    }
-
-    async function saveEntry(e) {
-        e.preventDefault();
-        
-        const datumVal = document.getElementById('datum').value;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const selectedDateParts = datumVal.split('-');
-        const enteredDate = new Date(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]);
-        enteredDate.setHours(0, 0, 0, 0);
-
-        if (enteredDate > today) {
-            alert('Fehler: Es können keine Aufträge oder Arbeitszeiten mit einem zukünftigen Datum fertiggestellt werden!');
-            return;
-        }
-
-        const selectedAuftragId = document.getElementById('selectAuftragZuordnung').value;
-        
-        let kundeVal = "";
-        const custSelectVal = document.getElementById('selectKundeDropdown').value;
-        if (custSelectVal === "__NEU__") {
-            kundeVal = document.getElementById('kundeManuell').value.trim();
-        } else {
-            kundeVal = custSelectVal;
-        }
-
-        if (!kundeVal) {
-            alert('Bitte gib einen Kunden an.');
-            return;
-        }
-
-        const ortVal = document.getElementById('ort').value;
-        const taetigkeitVal = document.getElementById('taetigkeit').value;
-
-        const entry = {
-            monteur: activeSession.user,
-            kunde: kundeVal,
-            ort: ortVal,
-            taetigkeit: taetigkeitVal,
-            zeit: parseFloat(document.getElementById('zeit').value),
-            datum: datumVal,
-            fotos: currentPhotos,
-            unterschrift: currentSignature,
-            zufriedenheit: selectedCustomerEmoji,
-            feedback_text: document.getElementById('kundenFeedbackText').value
-        };
-
-        const { error } = await supabaseClient.from('eintraege').insert([entry]);
-        if(error) { 
-            alert('Fehler beim Speichern des Eintrags: ' + error.message); 
-            return; 
-        }
-
-        if (selectedAuftragId) {
-            await supabaseClient
-                .from('auftraege')
-                .update({ status: 'Fertiggestellt (Wartet auf Büro)' })
-                .eq('id', selectedAuftragId);
-        } else {
-            const neuerSelbstErstellterAuftrag = {
-                kunde: kundeVal,
-                ort: ortVal,
-                beschreibung: taetigkeitVal,
-                monteur: activeSession.user,
-                termin: datumVal,
-                status: 'Fertiggestellt (Wartet auf Büro)'
-            };
-            await supabaseClient.from('auftraege').insert([neuerSelbstErstellterAuftrag]);
-        }
-
-        alert('Stundenzettel erfolgreich gespeichert & Auftrag an das Büro übertragen!');
-        document.getElementById('entryForm').reset();
-        document.getElementById('manualKundeGroup').style.display = 'none';
-        currentPhotos = []; 
-        selectedCustomerEmoji = '';
-        document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
-        clearSignature();
-        loadDataFromServer();
-    }
-
-    async function loadDataFromServer() {
-        try {
-            let query = supabaseClient.from('auftraege').select('*');
-            if (activeSession && activeSession.role === 'monteur') {
-                query = query.eq('monteur', activeSession.user);
-            }
-            const { data: auftraegeData, error: err1 } = await query;
-            if(!err1) {
-                globalAllAuftraege = auftraegeData || [];
-                renderAuftraege(globalAllAuftraege);
-                
-                if (activeSession && activeSession.role === 'monteur') {
-                    populateAuftragDropdown(globalAllAuftraege);
-                }
-            }
-
-            const { data: eintraegeData, err2 } = await supabaseClient.from('eintraege').select('*');
-            if(!err2) {
-                globalAllEintraege = eintraegeData || [];
-                renderBerichte(globalAllEintraege, globalAllAuftraege);
-                renderGalerie(globalAllEintraege);
-            }
-
-            const { data: monteursData, err3 } = await supabaseClient.from('monteurs').select('*');
-            if(!err3) {
-                globalAllMonteurs = monteursData || [];
-            }
-
-            if (activeSession && activeSession.role === 'monteur') {
-                populateCustomerDropdown();
-            }
-
-            if (activeSession && activeSession.role === 'buero') {
-                const { data: allBueroAuftraege } = await supabaseClient.from('auftraege').select('*');
-                if (allBueroAuftraege) {
-                    globalAllAuftraege = allBueroAuftraege;
-                }
-
-                renderBueroMonteurs(globalAllMonteurs);
-                renderBueroFolders(globalAllAuftraege, globalAllMonteurs, globalAllEintraege);
-
-                const nichtOffeneAuftraege = globalAllAuftraege.filter(a => a.status && a.status.toLowerCase() !== 'offen');
-                const letzterGesehenerId = Number(localStorage.getItem('timehero_last_seen_auftrag_id') || 0);
-                const neueFertigeAuftraege = nichtOffeneAuftraege.filter(a => Number(a.id) > letzterGesehenerId);
-
-                const banner = document.getElementById('notificationBanner');
-                if (neueFertigeAuftraege.length > 0) {
-                    document.getElementById('notificationText').textContent = `Es sind ${neueFertigeAuftraege.length} neue fertige Aufträge eingegangen!`;
-                    banner.style.setProperty('display', 'flex', 'important');
-                } else {
-                    banner.style.setProperty('display', 'none', 'important');
-                }
-            }
-        } catch(err) {
-            console.error("Ladefehler:", err);
-        }
-    }
-
-    function toggleBueroSection(section) {
-        if (section === 'eingegangen') {
-            const wrapper = document.getElementById('bueroEingegangenContentWrapper');
-            const isHidden = wrapper.style.display === 'none';
-            wrapper.style.display = isHidden ? 'block' : 'none';
-        } else if (section === 'monteure') {
-            const wrapper = document.getElementById('bueroMonteureContentWrapper');
-            const isHidden = wrapper.style.display === 'none';
-            wrapper.style.display = isHidden ? 'block' : 'none';
-        }
-    }
-
-    function toggleBerichteSection() {
-        const wrapper = document.getElementById('berichteContentWrapper');
-        const isHidden = wrapper.style.display === 'none';
-        wrapper.style.display = isHidden ? 'block' : 'none';
-    }
-
-    function triggerUniversalDownload(blob, filename) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        
-        try {
-            a.click();
-        } catch (e) {
-            window.open(url, '_blank');
-        }
-        
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 1000);
-    }
-
-    async function downloadAllGalleryImagesZip() {
-        if (!window.JSZip) {
-            alert('ZIP-Bibliothek wird geladen. Bitte versuche es in wenigen Sekunden noch einmal.');
-            return;
-        }
-        
-        let allPhotos = [];
-        globalAllEintraege.forEach(item => {
-            if (item.fotos && Array.isArray(item.fotos)) {
-                item.fotos.forEach((photo, idx) => {
-                    allPhotos.push({ src: photo, name: `${item.kunde || 'Kunde'}_${item.datum || 'Datum'}_${idx + 1}.png` });
-                });
-            }
-        });
-
-        if (allPhotos.length === 0) {
-            alert('Keine Bilder in der Galerie vorhanden zum Herunterladen.');
-            return;
-        }
-
-        const zip = new JSZip();
-        const imgFolder = zip.folder("TimeHero_Galerie_Bilder");
-
-        allPhotos.forEach((p) => {
-            try {
-                const base64Data = p.src.split(',')[1];
-                if (base64Data) {
-                    imgFolder.file(p.name, base64Data, { base64: true });
-                }
-            } catch (err) {
-                console.error("Fehler beim Hinzufügen des Bildes:", err);
-            }
-        });
-
-        try {
-            const content = await zip.generateAsync({ type: "blob" });
-            triggerUniversalDownload(content, `TimeHero_Galerie_${new Date().toISOString().slice(0, 10)}.zip`);
-        } catch (err) {
-            alert('Fehler beim Erstellen der ZIP-Datei: ' + err.message);
-        }
-    }
-
-    function downloadAuftraegeList() {
-        if (!globalAllAuftraege || globalAllAuftraege.length === 0) {
-            alert('Keine Aufträge zum Herunterladen vorhanden.');
-            return;
-        }
-
-        let csvContent = "ID;Kunde;Ort;Monteur;Termin;Status;Beschreibung\r\n";
-        globalAllAuftraege.forEach(a => {
-            const row = [a.id, `"${(a.kunde || '').replace(/"/g, '""')}"`, `"${(a.ort || '').replace(/"/g, '""')}"`, `"${(a.monteur || '').replace(/"/g, '""')}"`, a.termin, `"${(a.status || '').replace(/"/g, '""')}"`, `"${(a.beschreibung || '').replace(/"/g, '""')}"`];
-            csvContent += row.join(";") + "\r\n";
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        triggerUniversalDownload(blob, `TimeHero_Auftraege_${new Date().toISOString().slice(0, 10)}.csv`);
-    }
-
-    let currentReportExportData = null;
-
-    function openMonatsberichtModal() {
-        if (!activeSession) return;
-        
-        if (activeSession.role === 'monteur') {
-            generiereUndZeigeMonatsbericht(activeSession.user);
-        } else if (activeSession.role === 'buero') {
-            const modal = document.getElementById('modalMonteurAuswahl');
-            const select = document.getElementById('modalMonteurSelect');
-            
-            select.innerHTML = '<option value="">Lade Monteure aus Datenbank...</option>';
-            modal.style.display = 'flex';
-
-            if (globalAllMonteurs && globalAllMonteurs.length > 0) {
-                select.innerHTML = '';
-                globalAllMonteurs.forEach(m => {
-                    let opt = document.createElement('option');
-                    opt.value = m.name;
-                    opt.textContent = m.name;
-                    select.appendChild(opt);
-                });
-            } else {
-                select.innerHTML = '<option value="">Keine Monteure gefunden</option>';
-            }
-        }
-    }
-
-    function bestätigeMonteurAuswahl() {
-        const ausgewählterMonteur = document.getElementById('modalMonteurSelect').value;
-        if (!ausgewählterMonteur) {
-            alert("Bitte wähle einen gültigen Monteur aus.");
-            return;
-        }
-        
-        closeModal('modalMonteurAuswahl');
-        generiereUndZeigeMonatsbericht(ausgewählterMonteur);
-    }
-
-    function generiereUndZeigeMonatsbericht(targetMonteur) {
-        document.getElementById('reportPrintMonteurname').textContent = targetMonteur;
-        const now = new Date();
-        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-        document.getElementById('reportPrintSub').textContent = `Berichtsmonat: ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-
-        const monteurEintraege = globalAllEintraege.filter(e => e.monteur === targetMonteur);
-        currentReportExportData = { monteur: targetMonteur, eintraege: monteurEintraege };
-
-        const tbody = document.getElementById('a4TableBody');
-        
-        let total = 0;
-        if (monteurEintraege.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#777;">Keine Einträge für diesen Monteur gefunden.</td></tr>`;
-        } else {
-            tbody.innerHTML = monteurEintraege.map(e => {
-                total += Number(e.zeit || 0);
-                return `
-                    <tr>
-                        <td>${escapeHtml(e.datum || '-')}</td>
-                        <td>${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.</td>
-                        <td><strong>${escapeHtml(e.kunde)}</strong> (${escapeHtml(e.ort)})<br><span style="color:#475569;">${escapeHtml(e.taetigkeit)}</span></td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        document.getElementById('a4TotalHoursDisplay').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
-        openModal('modalMonatsbericht');
-        
-        setTimeout(() => {
-            initReportSignaturePad();
-        }, 100);
-    }
-
-    function downloadMonatsberichtFile() {
-        if (!currentReportExportData) return;
-        let textData = `MONATSBERICHT / LEISTUNGSNACHWEIS\n`;
-        textData += `Mitarbeiter: ${currentReportExportData.monteur}\n`;
-        textData += `Erstellungsdatum: ${new Date().toLocaleDateString('de-DE')}\n\n`;
-        textData += `Datum\tStunden\tKunde / Ort / Tätigkeit\n`;
-        textData += `---------------------------------------------------\n`;
-
-        let total = 0;
-        currentReportExportData.eintraege.forEach(e => {
-            total += Number(e.zeit || 0);
-            textData += `${e.datum}\t${e.zeit} Std.\t${e.kunde} (${e.ort}) - ${e.taetigkeit}\n`;
-        });
-        textData += `---------------------------------------------------\n`;
-        textData += `Gesamtstunden: ${total.toFixed(2)} Std.\n`;
-
-        const blob = new Blob([textData], { type: 'text/plain;charset=utf-8' });
-        triggerUniversalDownload(blob, `Monatsbericht_${currentReportExportData.monteur}_${new Date().toISOString().slice(0, 7)}.txt`);
-    }
-
-    function renderAuftraege(data) {
-        const container = document.getElementById('auftraegeList');
-        if(!container) return;
-        
-        const offeneAuftraege = data.filter(a => !a.status || a.status.toLowerCase() === 'offen');
-
-        if(offeneAuftraege.length === 0) { 
-            container.innerHTML = '<p style="color:#777;">Keine offenen Aufträge vorhanden.</p>'; 
-            return; 
-        }
-        
-        container.innerHTML = offeneAuftraege.map(a => `
-            <div class="entry-item" style="border-left: 4px solid #27ae60;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <strong>${escapeHtml(a.kunde)}</strong> (${escapeHtml(a.ort)}) - 🛠️ ${escapeHtml(a.monteur)}<br>
-                        <small>📅 ${a.termin} | Status: <span class="badge">${a.status}</span></small>
-                        <div>${escapeHtml(a.beschreibung)}</div>
-                        ${a.manuell_geaendert ? `<small style="color: #c0392b; display: block; margin-top: 4px;">⚠️ Manuell geändert am ${a.manuell_geaendert}</small>` : ''}
-                    </div>
-                    ${activeSession && activeSession.role === 'buero' ? `
-                        <button class="btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8em;" onclick="openBueroEditAuftrag('${a.id}')">Bearbeiten</button>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function getCalendarWeek(dateObj) {
-        const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
-        const dayNum = d.getUTCDay() || 7;
-        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    }
-
-    function formatItemHtml(a, e) {
-        const arbeitsStunden = e && e.zeit !== undefined ? `${e.zeit.toFixed(2).replace('.', ',')} Std.` : '0,00 Std.';
-        const arbeitsDatum = e && e.datum ? e.datum : (a.termin || 'Kein Datum');
-        const fotos = e && e.fotos ? e.fotos : [];
-
-        return `
-            <div class="entry-item" style="border-left: 4px solid #e67e22; margin-bottom: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <strong>${escapeHtml(a.kunde)}</strong> (${escapeHtml(a.ort)})<br>
-                        <small style="color: #2c3e50; font-weight: bold;">⏱️ Arbeitsstunden: ${arbeitsStunden} | 📅 Datum: ${arbeitsDatum}</small><br>
-                        <small>Status: <span class="badge">${a.status}</span></small>
-                        <div>${escapeHtml(a.beschreibung)}</div>
-                        ${e && e.taetigkeit ? `<small style="color:#2c3e50; display:block; margin-top:3px;"><strong>Tätigkeit:</strong> ${escapeHtml(e.taetigkeit)}</small>` : ''}
-                        ${e && e.zufriedenheit ? `<div>Zufriedenheit: ${e.zufriedenheit} ${e.feedback_text ? `("${escapeHtml(e.feedback_text)}")` : ''}</div>` : ''}
-                        
-                        ${fotos.length > 0 ? `
-                            <div style="margin-top: 6px;">
-                                <small><strong>Zugehörige Bilder (${fotos.length}):</strong></small>
-                                <div class="image-preview-container">
-                                    ${fotos.map(f => `<img src="${f}" class="image-preview" onclick="window.open('${f}')">`).join('')}
-                                </div>
-                            </div>
-                        ` : '<small style="color:#999; display:block; margin-top:4px;">Keine Bilder hochgeladen</small>'}
-
-                        ${a.manuell_geaendert ? `<small style="color: #c0392b; display: block; margin-top: 4px;">⚠️ Manuell geändert am ${a.manuell_geaendert}</small>` : ''}
-                    </div>
-                    <button class="btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8em;" onclick="openBueroEditAuftrag('${a.id}')">Bearbeiten</button>
-                </div>
-            </div>
-        `;
-    }
-
-    function buildHierarchyHtml(itemsList) {
-        const monthsMap = {};
-        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
-
-        itemsList.forEach(item => {
-            const dateStr = item.entry && item.entry.datum ? item.entry.datum : (item.auftrag.termin || '1970-01-01');
-            const d = new Date(dateStr);
-            const year = isNaN(d.getFullYear()) ? 2026 : d.getFullYear();
-            const monthIndex = isNaN(d.getMonth()) ? 0 : d.getMonth();
-            const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
-            const monthLabel = `${monthNames[monthIndex]} ${year}`;
-
-            const kw = getCalendarWeek(isNaN(d.getTime()) ? new Date() : d);
-            const weekKey = `${monthKey}-KW${kw}`;
-            const weekLabel = `KW ${kw}`;
-
-            const dayKey = dateStr;
-            const dayLabel = `Datum: ${dateStr}`;
-
-            if (!monthsMap[monthKey]) {
-                monthsMap[monthKey] = { label: monthLabel, weeks: {} };
-            }
-            if (!monthsMap[monthKey].weeks[weekKey]) {
-                monthsMap[monthKey].weeks[weekKey] = { label: weekLabel, days: {} };
-            }
-            if (!monthsMap[monthKey].weeks[weekKey].days[dayKey]) {
-                monthsMap[monthKey].weeks[weekKey].days[dayKey] = { label: dayLabel, items: [] };
-            }
-
-            monthsMap[monthKey].weeks[weekKey].days[dayKey].items.push(item);
-        });
-
-        let html = '';
-        Object.keys(monthsMap).sort().reverse().forEach(mKey => {
-            const mObj = monthsMap[mKey];
-            let monthCount = 0;
-            Object.keys(mObj.weeks).forEach(wKey => {
-                Object.keys(mObj.weeks[wKey].days).forEach(dKey => {
-                    monthCount += mObj.weeks[wKey].days[dKey].items.length;
-                });
-            });
-
-            html += `
-                <div class="sub-folder-month">
-                    <div class="sub-folder-month-header" onclick="toggleFolder(this)">
-                        <span>📁 Monat: <strong>${mObj.label}</strong> (${monthCount} Aufträge)</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="sub-folder-content">
-            `;
-
-            Object.keys(mObj.weeks).sort().reverse().forEach(wKey => {
-                const wObj = mObj.weeks[wKey];
-                let weekCount = 0;
-                Object.keys(wObj.days).forEach(dKey => {
-                    weekCount += wObj.days[dKey].items.length;
-                });
-
-                html += `
-                    <div class="sub-folder-week">
-                        <div class="sub-folder-week-header" onclick="toggleFolder(this)">
-                            <span>📂 Woche: <strong>${wObj.label}</strong> (${weekCount} Aufträge)</span>
-                            <span>▼</span>
-                        </div>
-                        <div class="sub-folder-content">
-                `;
-
-                Object.keys(wObj.days).sort().reverse().forEach(dKey => {
-                    const dObj = wObj.days[dKey];
-                    
-                    html += `
-                        <div class="sub-folder-day">
-                            <div class="sub-folder-day-header" onclick="toggleFolder(this)">
-                                <span>📅 Tag: <strong>${dObj.label}</strong> (${dObj.items.length} Aufträge)</span>
-                                <span>▼</span>
-                            </div>
-                            <div class="sub-folder-content">
-                    `;
-
-                    dObj.items.forEach(it => {
-                        html += formatItemHtml(it.auftrag, it.entry);
-                    });
-
-                    html += `
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `
-                    </div>
-                </div>
-            `;
-        });
-
-        return html;
-    }
-
-    function renderBueroFolders(auftraegeData, monteursData, eintraegeData, searchQuery = '') {
-        const container = document.getElementById('bueroMonteurFoldersContainer');
-        const searchResultsFolder = document.getElementById('bueroSearchResultsFolder');
-        if(!container || !searchResultsFolder) return;
-
-        const q = searchQuery.toLowerCase().trim();
-
-        if (q.length > 0) {
-            const monteurNamesSet = new Set(monteursData.map(m => m.name));
-            auftraegeData.forEach(a => { if(a.monteur) monteurNamesSet.add(a.monteur); });
-            const allMonteurNames = Array.from(monteurNamesSet);
-
-            let matchedItems = [];
-
-            allMonteurNames.forEach(monteurName => {
-                const monteursAuftraege = auftraegeData.filter(a => 
-                    a.monteur === monteurName && 
-                    (!a.status || a.status.toLowerCase() !== 'offen')
-                );
-                const monteursEintraege = eintraegeData.filter(e => e.monteur === monteurName);
-
-                monteursAuftraege.forEach(a => {
-                    const matchKunde = (a.kunde || '').toLowerCase().includes(q);
-                    const matchOrt = (a.ort || '').toLowerCase().includes(q);
-                    const matchBeschr = (a.beschreibung || '').toLowerCase().includes(q);
-                    const matchTermin = (a.termin || '').toLowerCase().includes(q);
-                    
-                    const matchingEntry = monteursEintraege.find(e => e.kunde && e.kunde.toLowerCase() === a.kunde.toLowerCase());
-                    const matchEintrag = matchingEntry && (
-                        (matchingEntry.kunde || '').toLowerCase().includes(q) ||
-                        (matchingEntry.taetigkeit || '').toLowerCase().includes(q) ||
-                        (matchingEntry.datum || '').toLowerCase().includes(q) ||
-                        (matchingEntry.feedback_text || '').toLowerCase().includes(q)
-                    );
-
-                    if (matchKunde || matchOrt || matchBeschr || matchTermin || matchEintrag) {
-                        matchedItems.push({ auftrag: a, entry: matchingEntry });
-                    }
-                });
-            });
-
-            searchResultsFolder.style.display = 'block';
-            searchResultsFolder.innerHTML = `
-                <div class="monteur-folder" style="border: 2px solid var(--accent-color);">
-                    <div class="monteur-folder-header" style="background: #fef5ec; color: var(--accent-color);" onclick="toggleFolder(this)">
-                        <span>🔍 Suchergebnisse ("${escapeHtml(searchQuery)}") (${matchedItems.length} Treffer)</span>
-                        <span>▲</span>
-                    </div>
-                    <div class="monteur-folder-content open">
-                        ${matchedItems.length === 0 ? '<p style="color:#777; font-size:0.9em;">Keine passenden Aufträge gefunden.</p>' :
-                            buildHierarchyHtml(matchedItems)
-                        }
-                    </div>
-                </div>
-            `;
-        } else {
-            searchResultsFolder.style.display = 'none';
-            searchResultsFolder.innerHTML = '';
-        }
-
-        const monteurNamesSet = new Set(monteursData.map(m => m.name));
-        auftraegeData.forEach(a => { if(a.monteur) monteurNamesSet.add(a.monteur); });
-        const allMonteurNames = Array.from(monteurNamesSet);
-
-        if(allMonteurNames.length === 0) {
-            container.innerHTML = '<p style="color:#777;">Keine Monteure oder Aufträge vorhanden.</p>';
-            return;
-        }
-
-        let htmlContent = '';
-
-        allMonteurNames.forEach(monteurName => {
-            const monteursAuftraege = auftraegeData.filter(a => 
-                a.monteur === monteurName && 
-                (!a.status || a.status.toLowerCase() !== 'offen')
-            );
-
-            const monteursEintraege = eintraegeData.filter(e => e.monteur === monteurName);
-            const itemsList = monteursAuftraege.map(a => {
-                const matchingEntry = monteursEintraege.find(e => e.kunde && e.kunde.toLowerCase() === a.kunde.toLowerCase());
-                return { auftrag: a, entry: matchingEntry };
-            });
-
-            htmlContent += `
-                <div class="monteur-folder">
-                    <div class="monteur-folder-header" onclick="toggleFolder(this)">
-                        <span>📁 Monteur-Ordner: <strong>${escapeHtml(monteurName)}</strong> (${monteursAuftraege.length} Aufträge)</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="monteur-folder-content">
-                        ${itemsList.length === 0 ? '<p style="color:#777; font-size:0.9em;">Keine Aufträge in diesem Ordner.</p>' : 
-                            buildHierarchyHtml(itemsList)
-                        }
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = htmlContent || '<p style="color:#777;">Keine Monteur-Ordner vorhanden.</p>';
-    }
-
-    function toggleFolder(headerElement) {
-        const content = headerElement.nextElementSibling;
-        const isOpen = content.classList.contains('open');
-        content.classList.toggle('open', !isOpen);
-        const indicator = headerElement.querySelector('span:last-child');
-        if (indicator) indicator.textContent = isOpen ? '▼' : '▲';
-    }
-
-    function filterBueroFolders() {
-        const query = document.getElementById('bueroSearchInput').value;
-        renderBueroFolders(globalAllAuftraege, globalAllMonteurs, globalAllEintraege, query);
-    }
-
-    function openBueroEditAuftrag(id) {
-        const auftrag = globalAllAuftraege.find(a => String(a.id) === String(id));
-        if (!auftrag) return;
-
-        document.getElementById('editAuftragId').value = auftrag.id;
-        document.getElementById('editAuftragKunde').value = auftrag.kunde || '';
-        document.getElementById('editAuftragOrt').value = auftrag.ort || '';
-        document.getElementById('editAuftragBeschreibung').value = auftrag.beschreibung || '';
-        document.getElementById('editAuftragMonteur').value = auftrag.monteur || '';
-        document.getElementById('editAuftragTermin').value = auftrag.termin || '';
-        document.getElementById('editAuftragStatus').value = auftrag.status || 'offen';
-
-        openModal('modalEditAuftragBuero');
-    }
-
-    async function saveEditedAuftragBuero(e) {
-        e.preventDefault();
-        const id = document.getElementById('editAuftragId').value;
-        const now = new Date();
-        const timestampStr = now.toLocaleDateString('de-DE') + ' um ' + now.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
-
-        const updatedData = {
-            kunde: document.getElementById('editAuftragKunde').value,
-            ort: document.getElementById('editAuftragOrt').value,
-            beschreibung: document.getElementById('editAuftragBeschreibung').value,
-            monteur: document.getElementById('editAuftragMonteur').value,
-            termin: document.getElementById('editAuftragTermin').value,
-            status: document.getElementById('editAuftragStatus').value,
-            manuell_geaendert: timestampStr
-        };
-
-        const { error } = await supabaseClient
-            .from('auftraege')
-            .update(updatedData)
-            .eq('id', id);
-
-        if (error) {
-            alert('Fehler beim Speichern der Änderungen: ' + error.message);
-            return;
-        }
-
-        alert('Auftrag wurde im Büro geändert und der Änderungshinweis wurde vermerkt!');
-        closeModal('modalEditAuftragBuero');
-        loadDataFromServer();
-    }
-
-    function renderBerichte(eintraegeData, auftraegeData) {
-        const container = document.getElementById('reportList');
-        if(!container) return;
-        
-        let filteredEntries = eintraegeData;
-        let filteredAuftraege = auftraegeData;
-
-        if (activeSession && activeSession.role === 'monteur') {
-            filteredEntries = eintraegeData.filter(e => e.monteur === activeSession.user);
-            filteredAuftraege = auftraegeData.filter(a => a.monteur === activeSession.user);
-        }
-
-        const total = filteredEntries.reduce((acc, curr) => acc + Number(curr.zeit || 0), 0);
-        document.getElementById('reportTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
-        document.getElementById('reportMonteur').textContent = activeSession ? activeSession.user : '-';
-
-        if(filteredEntries.length === 0) {
-            container.innerHTML = '<p style="color:#777;">Keine Berichte vorhanden.</p>';
-            return;
-        }
-
-        const fertigKundenSet = new Set(
-            filteredAuftraege
-                .filter(a => a.status && a.status.toLowerCase() !== 'offen')
-                .map(a => (a.kunde || '').toLowerCase())
-        );
-
-        const sortedEntries = [...filteredEntries].sort((a, b) => {
-            const aFertig = fertigKundenSet.has((a.kunde || '').toLowerCase()) ? 1 : 0;
-            const bFertig = fertigKundenSet.has((b.kunde || '').toLowerCase()) ? 1 : 0;
-            return bFertig - aFertig;
-        });
-
-        const fertigAuftraegeListe = filteredAuftraege.filter(a => a.status && a.status.toLowerCase() !== 'offen');
-
-        let htmlOutput = '';
-
-        fertigAuftraegeListe.forEach(fa => {
-            htmlOutput += `
-                <div class="entry-item" style="border-left: 4px solid #e67e22;">
-                    <span class="badge" style="background: #e67e22; color: white; margin-bottom: 5px; display: inline-block;">✓ Fertiger Auftrag</span><br>
-                    <strong>${escapeHtml(fa.kunde)}</strong> (${escapeHtml(fa.ort)}) - 📅 Termin: ${fa.termin}
-                    ${activeSession && activeSession.role === 'buero' ? `<br><small style="color:#2c3e50;">Monteur: <strong>${escapeHtml(fa.monteur)}</strong></small>` : ''}
-                    <br><div>${escapeHtml(fa.beschreibung)}</div>
-                    <small style="color:#777; display:block; margin-top:3px;">Status: ${fa.status}</small>
-                </div>
-            `;
-        });
-
-        htmlOutput += sortedEntries.map(e => {
-            const isFertig = fertigKundenSet.has((e.kunde || '').toLowerCase());
-            return `
-                <div class="entry-item" style="border-left: 4px solid ${isFertig ? '#e67e22' : '#ccc'};">
-                    ${isFertig ? '<span class="badge" style="background: #e67e22; color: white; margin-bottom: 5px; display: inline-block;">✓ Fertiger Auftrag (Eintrag)</span><br>' : ''}
-                    <strong>${escapeHtml(e.kunde)}</strong> (${escapeHtml(e.ort)}) - ⏱️ ${e.zeit} Std. 
-                    ${e.zufriedenheit ? `| Zufriedenheit: ${e.zufriedenheit}` : ''}
-                    ${activeSession && activeSession.role === 'buero' ? `<br><small style="color:#2c3e50;">Monteur: <strong>${escapeHtml(e.monteur)}</strong></small>` : ''}
-                    <br><div>${escapeHtml(e.taetigkeit)}</div>
-                    ${e.feedback_text ? `<small style="color:#555;">Kundenkommentar: "${escapeHtml(e.feedback_text)}"</small>` : ''}
-                </div>
-            `;
-        }).join('');
-
-        container.innerHTML = htmlOutput;
-    }
-
-    function renderBueroMonteurs(monteurs) {
-        const container = document.getElementById('bueroMonteursList');
-        if(!container) return;
-        if(monteurs.length === 0) {
-            container.innerHTML = '<p style="color:#777;">Noch keine Monteure ernannt.</p>';
-            return;
-        }
-
-        container.innerHTML = monteurs.map(m => `
-            <div class="entry-item" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div style="cursor: pointer; flex: 1; min-width: 150px;" onclick="openMonteurDetails('${escapeHtml(m.name)}')">
-                    <strong>🛠️ ${escapeHtml(m.name)}</strong><br>
-                    <small style="color:#666;">Klicken für Arbeitszeiten</small>
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <button class="btn-secondary" style="width: auto; padding: 5px 10px; font-size: 0.8em;" onclick="openMonteurDetails('${escapeHtml(m.name)}')">Zeiten</button>
-                    <button class="btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8em;" onclick="requestAdminAction('edit', '${escapeHtml(m.name)}')">Bearbeiten</button>
-                    <button class="btn-danger" style="width: auto; padding: 5px 10px; font-size: 0.8em;" onclick="requestAdminAction('delete', '${escapeHtml(m.name)}')">Löschen</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function openMonteurDetails(monteurName) {
-        document.getElementById('detailMonteurTitle').textContent = `🛠️ Arbeitszeiten von: ${monteurName}`;
-        
-        const monteurEntries = globalAllEintraege.filter(e => e.monteur === monteurName);
-        const total = monteurEntries.reduce((acc, curr) => acc + Number(curr.zeit || 0), 0);
-        document.getElementById('detailMonteurHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
-
-        const listContainer = document.getElementById('detailMonteurEntriesList');
-        if (monteurEntries.length === 0) {
-            listContainer.innerHTML = '<p style="color:#777;">Keine Einträge für diesen Monteur vorhanden.</p>';
-        } else {
-            listContainer.innerHTML = monteurEntries.map(e => `
-                <div class="entry-item">
-                    <strong>${escapeHtml(e.kunde)}</strong> (${escapeHtml(e.ort)}) - ⏱️ ${e.zeit} Std. 
-                    <small>📅 ${e.datum}</small>
-                    ${e.zufriedenheit ? `| ${e.zufriedenheit}` : ''}
-                    <div>${escapeHtml(e.taetigkeit)}</div>
-                    ${e.feedback_text ? `<small style="color:#555;">Feedback: "${escapeHtml(e.feedback_text)}"</small>` : ''}
-                </div>
-            `).join('');
-        }
-
-        openModal('modalMonteurDetails');
-    }
-
-    function renderGalerie(data) {
-        const container = document.getElementById('galleryContainer');
-        if(!container) return;
-        let allPhotos = [];
-        data.forEach(item => {
-            if (item.fotos && Array.isArray(item.fotos)) {
-                item.fotos.forEach(photo => {
-                    allPhotos.push({ src: photo, kunde: item.kunde, datum: item.datum, monteur: item.monteur });
-                });
-            }
-        });
-
-        if(allPhotos.length === 0) {
-            container.innerHTML = '<p style="color:#777;">Keine Bilder vorhanden.</p>';
-            return;
-        }
-
-        container.innerHTML = allPhotos.map(p => `
-            <div class="gallery-item">
-                <img src="${p.src}" alt="Foto">
-                <div class="gallery-caption">${escapeHtml(p.kunde)}<br>${p.datum} (${escapeHtml(p.monteur)})</div>
-            </div>
-        `).join('');
-    }
-
-    function handleImageUpload(e) {
-        Array.from(e.target.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = ev => { 
-                currentPhotos.push(ev.target.result); 
-                renderPhotos(); 
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    function renderPhotos() {
-        document.getElementById('photoPreview').innerHTML = currentPhotos.map(p => `<img src="${p}" class="image-preview">`).join('');
-    }
-
-    function dismissNotificationAndGoBerichte() {
-        const banner = document.getElementById('notificationBanner');
-        if(banner) banner.style.setProperty('display', 'none', 'important');
-        
-        const nichtOffeneAuftraege = globalAllAuftraege.filter(a => a.status && a.status.toLowerCase() !== 'offen');
-        if (nichtOffeneAuftraege.length > 0) {
-            const maxId = Math.max(...nichtOffeneAuftraege.map(a => Number(a.id) || 0));
-            localStorage.setItem('timehero_last_seen_auftrag_id', maxId);
-        }
-
-        switchTab('berichte');
-    }
-
-    function switchTab(name, event, hideNotificationOnBerichte = false) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
-        const targetTab = document.getElementById(`tab-${name}`);
-        if(targetTab) targetTab.classList.add('active');
-
-        if (event && event.currentTarget) {
-            event.currentTarget.classList.add('active');
-        } else {
-            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(name));
-            if(activeBtn) activeBtn.classList.add('active');
-        }
-
-        if (name === 'berichte' && activeSession && activeSession.role === 'buero') {
-            const banner = document.getElementById('notificationBanner');
-            if(banner) banner.style.setProperty('display', 'none', 'important');
-        }
-    }
-
-    function escapeHtml(text) {
-        return text ? text.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : '';
+        // Vervollständigte Logik für Auftragsdropdown
     }
 </script>
-
 </body>
 </html>
