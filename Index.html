@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeHero - Zeiterfassung & Büro</title>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- JSZip für Galerie Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --primary-light: #334155;
+            --accent-color: #f59e0b;
+            --accent-hover: #d97706;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --bg-overlay: rgba(255, 255, 255, 0.97);
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-main);
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        *, *:before, *:after { box-sizing: inherit; }
+
+        /* --- SPLASH SCREEN --- */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            color: #ffffff; text-align: center;
+        }
+        #splash-screen.fade-out { opacity: 0; visibility: hidden; }
+
+        .splash-content {
+            display: flex; flex-direction: column; align-items: center;
+            animation: zoomIn 0.5s ease-out; padding: 0 20px;
+        }
+
+        .splash-logo {
+            position: relative; width: 100px; height: 100px;
+            background: rgba(255, 255, 255, 0.05); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 20px; border: 2px solid rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+        }
+        .splash-logo .icon { font-size: 3em; animation: float 2s infinite ease-in-out; }
+
+        .pulse-ring {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            border: 2px solid var(--accent-color); animation: pulse 2s infinite;
+        }
+
+        .splash-title {
+            font-size: 2.2em; font-weight: 800; margin: 0;
+            background: linear-gradient(45deg, #ffffff, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .splash-subtitle { font-size: 1.1em; color: var(--text-muted); margin: 8px 0 25px 0; font-weight: 400; letter-spacing: 0.5px; }
+        .splash-loader { width: 180px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; }
+        .loader-bar { width: 0%; height: 100%; background: var(--accent-color); border-radius: 4px; animation: loadingProgress 1.5s ease-in-out forwards; }
+
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
+        @keyframes loadingProgress { 0% { width: 0%; } 100% { width: 100%; } }
+
+        /* --- AUTH & MODALS --- */
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 9000;
+            padding: 15px;
+        }
+
+        .auth-card {
+            background: #fff; width: 100%; max-width: 420px; padding: 30px;
+            border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+        }
+
+        .auth-choice-btns { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .auth-choice-btns button { padding: 14px; font-weight: 600; font-size: 1em; border-radius: 8px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px);
+            display: none; justify-content: center; align-items: center; z-index: 8500;
+            padding: 15px; box-sizing: border-box;
+        }
+        .modal-box {
+            background: #fff; width: 100%; max-width: 650px; max-height: 90vh;
+            overflow-y: auto; padding: 25px; border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative;
+            word-break: break-word;
+        }
+        .modal-header-actions {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;
+        }
+        .modal-close {
+            background: #f1f5f9; border: none; border-radius: 50%; width: 36px; height: 36px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); transition: background 0.2s; flex-shrink: 0;
+        }
+        .modal-close:hover { background: #e2e8f0; color: var(--text-main); }
+
+        /* --- NOTIFICATION BANNER --- */
+        #notificationBanner {
+            background: var(--danger-color); color: white; padding: 14px 20px; border-radius: 10px;
+            margin-bottom: 20px; display: none; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); font-weight: 500;
+        }
+        .aufblinken { animation: pulseAlert 1.5s infinite; }
+        @keyframes pulseAlert { 
+            0% { opacity: 1; transform: scale(1); } 
+            50% { opacity: 0.85; transform: scale(1.005); } 
+            100% { opacity: 1; transform: scale(1); } 
+        }
+
+        .monteur-checkbox-group {
+            border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; max-height: 150px; overflow-y: auto; background: #f8fafc; text-align: left;
+        }
+        .monteur-checkbox-label {
+            display: flex; align-items: center; gap: 10px; font-weight: normal; margin-bottom: 8px; font-size: 0.95em; cursor: pointer;
+        }
+        .monteur-checkbox-label input { width: auto; margin: 0; accent-color: var(--accent-color); }
+
+        .scrollable-folder {
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8fafc;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 900px; margin: 0 auto; background: var(--bg-overlay);
+            padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-header { text-align: center; margin-bottom: 20px; min-height: 20px; }
+        .logo-preview { max-width: 220px; max-height: 90px; display: block; margin: 0 auto 10px auto; object-fit: contain; }
+
+        h1, h2, h3, h4 { color: var(--primary-color); margin-top: 0; font-weight: 700; }
+
+        .card {
+            background: var(--card-bg); padding: 20px; border-radius: 12px;
+            margin-bottom: 20px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-left: 4px solid var(--accent-color);
+            word-break: break-word;
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group { margin-bottom: 16px; text-align: left; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9em; color: var(--primary-light); }
+
+        input, select, textarea, button {
+            width: 100%; padding: 11px 14px; border: 1px solid var(--border-color);
+            border-radius: 8px; box-sizing: border-box; font-size: 0.95em;
+            background-color: #fff; color: var(--text-main);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+
+        textarea { resize: vertical; height: 80px; }
+        .row { display: flex; gap: 15px; }
+        .row .form-group { flex: 1; }
+
+        button { cursor: pointer; font-weight: 600; border-radius: 8px; transition: background 0.2s, transform 0.1s; }
+        button:active { transform: scale(0.98); }
+
+        button.btn-primary { background-color: var(--accent-color); color: white; border: none; }
+        button.btn-primary:hover { background-color: var(--accent-hover); }
+
+        button.btn-secondary { background-color: var(--primary-color); color: white; border: none; }
+        button.btn-secondary:hover { background-color: var(--primary-light); }
+
+        button.btn-danger { background-color: var(--danger-color); color: white; border: none; }
+        button.btn-danger:hover { background-color: #dc2626; }
+
+        button.btn-success { background-color: var(--success-color); color: white; border: none; }
+        button.btn-success:hover { background-color: #059669; }
+
+        .tabs { 
+            display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; white-space: nowrap; 
+            -webkit-overflow-scrolling: touch; padding-bottom: 6px; 
+        }
+        .tab-btn { 
+            background: #f1f5f9; border: 1px solid var(--border-color); padding: 10px 16px; 
+            cursor: pointer; border-radius: 8px; font-weight: 600; flex-shrink: 0; font-size: 0.9em; 
+            color: var(--text-muted); transition: all 0.2s;
+        }
+        .tab-btn:hover { background: #e2e8f0; color: var(--text-main); }
+        .tab-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        
+        .btn-monatsbericht {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; padding: 14px; cursor: pointer; border-radius: 10px; font-weight: 600; width: 100%; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.05em; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+        }
+        .btn-monatsbericht:hover { opacity: 0.95; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- BÜRO 3-OBEN 2-UNTEN GRID --- */
+        .dashboard-grid-buero { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; 
+        }
+        .dashboard-grid-buero .dash-card:nth-child(4) { grid-column: 1 / 2; }
+        .dashboard-grid-buero .dash-card:nth-child(5) { grid-column: 2 / 3; }
+        @media (max-width: 768px) {
+            .dashboard-grid-buero { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid-buero .dash-card:nth-child(4),
+            .dashboard-grid-buero .dash-card:nth-child(5) { grid-column: auto; }
+        }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
+        .dash-card {
+            background: #fff; border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 22px 12px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .dash-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: var(--accent-color); }
+        .dash-card .icon { font-size: 2.2em; display: block; margin-bottom: 10px; }
+        .dash-card span { font-weight: 600; color: var(--primary-color); font-size: 0.95em; }
+
+        .image-preview-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .image-preview { width: 75px; height: 75px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; }
+
+        .entry-item { background: #fff; border: 1px solid var(--border-color); padding: 14px; border-radius: 8px; margin-bottom: 12px; word-break: break-word; }
+        .badge { background: #f1f5f9; color: var(--text-muted); padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 600; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-top: 15px; }
+        .gallery-item { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); position: relative; }
+        .gallery-item img { width: 100%; height: 110px; object-fit: cover; display: block; cursor: pointer; }
+        .gallery-caption { padding: 6px; font-size: 0.8em; color: var(--text-muted); background: #f8fafc; }
+
+        .signature-pad-container { border: 2px dashed var(--border-color); background: #fafafa; border-radius: 8px; position: relative; margin-top: 6px; }
+        canvas.signature-pad { width: 100%; height: 130px; display: block; touch-action: none; cursor: crosshair; }
+        .sig-btn-row { display: flex; gap: 10px; margin-top: 8px; }
+
+        .emoji-selector { display: flex; gap: 12px; justify-content: center; margin: 12px 0; }
+        .emoji-option { font-size: 2em; cursor: pointer; padding: 8px; border-radius: 50%; border: 2px solid transparent; transition: transform 0.2s, background 0.2s; }
+        .emoji-option:hover { transform: scale(1.1); background: #f1f5f9; }
+        .emoji-option.selected { border-color: var(--accent-color); background: #fef3c7; transform: scale(1.15); }
+
+        .buero-only { display: none !important; }
+        .monteur-only { display: block !important; }
+        
+        @media (max-width: 600px) { .row { flex-direction: column; gap: 0; } }
+
+        /* --- DIN A4 DRUCKBERICHT & MODAL OPTIMIERUNG --- */
+        #modalMonatsBericht .modal-box, #modalWochenBericht .modal-box, #modalKundenBericht .modal-box, #modalKundenFolderDetail .modal-box {
+            max-width: 210mm; width: 100%; min-height: 297mm; padding: 20mm; background: #fff; color: #111; 
+            box-sizing: border-box; box-shadow: 0 0 25px rgba(0,0,0,0.15); margin: auto; border-radius: 0;
+        }
+
+        .a4-report-page { font-family: 'Inter', system-ui, sans-serif; font-size: 13px; color: #1e293b; line-height: 1.5; }
+        .a4-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px; margin-bottom: 25px; }
+        .a4-header h2 { margin: 0; color: var(--primary-color); font-size: 22px; }
+        
+        .a4-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .a4-table th, .a4-table td { border: 1px solid var(--border-color); padding: 9px 12px; text-align: left; vertical-align: top; font-size: 12px; }
+        .a4-table th { background-color: #f8fafc; color: var(--primary-color); font-weight: 700; }
+        .a4-summary { background: #f8fafc; border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 8px; margin-bottom: 25px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; }
+        .a4-signature-section { margin-top: 40px; page-break-inside: avoid; }
+
+        @media print {
+            body { background: none; padding: 0; }
+            .modal-overlay { position: static; background: none; backdrop-filter: none; display: flex !important; padding: 0; }
+            .container, #splash-screen, .tabs, .modal-close, button { display: none !important; }
+            #modalMonatsBericht .modal-box, #modalWochenBericht .modal-box { box-shadow: none; max-width: 100%; width: 100%; padding: 0; margin: 0; min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-screen">
+    <div class="splash-content">
+        <div class="splash-logo">
+            <span class="icon">⏱️</span>
+            <div class="pulse-ring"></div>
+        </div>
+        <h1 class="splash-title">TimeHero</h1>
+        <p class="splash-subtitle">Zeiterfassung & Büro</p>
+        <div class="splash-loader"><div class="loader-bar"></div></div>
+    </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="auth-overlay" style="display:none;">
+    <div id="stepChoice" class="auth-card">
+        <h2>Bereich auswählen</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Bitte wählen Sie Ihren Modus:</p>
+        <div class="auth-choice-btns">
+            <button class="btn-primary" onclick="showAuthForm('buero')">🏢 Büro Modus / Anmeldung</button>
+            <button class="btn-success" onclick="showAuthForm('bueroRegister')">✨ Büro Registrierung</button>
+            <button class="btn-secondary" onclick="showAuthForm('monteur')">🛠️ Monteur Modus</button>
+        </div>
+    </div>
+
+    <!-- BÜRO ANMELDUNG -->
+    <div id="stepBuero" class="auth-card" style="display:none;">
+        <h2>🏢 Büro Access</h2>
+        <div class="form-group">
+            <label>E-Mail Adresse:</label>
+            <input type="email" id="bueroEmail" placeholder="name@firma.de">
+        </div>
+        <div class="form-group">
+            <label>Passwort:</label>
+            <input type="password" id="bueroCode" placeholder="Passwort eingeben">
+        </div>
+        <button class="btn-primary" onclick="loginBuero()" style="padding: 12px; margin-top: 5px;">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+
+    <!-- BÜRO REGISTRIERUNG -->
+    <div id="stepBueroRegister" class="auth-card" style="display:none;">
+        <h2>✨ Büro Registrierung</h2>
+        <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 15px;">Das Passwort wird automatisch generiert und im Anschluss angezeigt.</p>
+        <div class="form-group">
+            <label>Firmen-E-Mail:</label>
+            <input type="email" id="bueroRegEmail" placeholder="firma@buero.de">
+        </div>
+        <button class="btn-success" onclick="registerBuero()" style="padding: 12px; margin-top: 5px;">Registrieren & Passwort generieren</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+
+    <!-- MONTEUR LOGIN -->
+    <div id="stepMonteur" class="auth-card" style="display:none;">
+        <h2>🛠️ Monteur Login</h2>
+        <div class="form-group">
+            <label>Name / Benutzername:</label>
+            <input type="text" id="monteurUser" placeholder="Dein Name">
+        </div>
+        <div class="form-group">
+            <label>Passwort:</label>
+            <input type="password" id="monteurPassword" placeholder="Dein Passwort">
+        </div>
+        <button class="btn-primary" onclick="loginMonteur()" style="padding: 12px; margin-top: 5px;">Anmelden</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="resetAuthView()">Zurück</button>
+    </div>
+</div>
+
+<!-- MODAL: PASSWORT ANZEIGE -->
+<div id="modalGeneratedPassword" class="auth-overlay" style="display:none; z-index: 9400;">
+    <div class="auth-card">
+        <h2>🎉 Erfolgreich registriert!</h2>
+        <p style="color: var(--text-muted); font-size: 0.95em;">Ihr Büro-Zugang wurde eingerichtet. Bitte speichern Sie Ihr automatisch generiertes Passwort:</p>
+        <div class="form-group" style="margin: 20px 0;">
+            <input type="text" id="generatedPasswordDisplay" readonly style="font-weight: bold; text-align: center; font-size: 1.2em; background: #f8fafc; color: var(--primary-color);">
+        </div>
+        <button class="btn-primary" onclick="closeGeneratedPasswordModal()" style="padding: 12px;">Verstanden & Weiter zum Login</button>
+    </div>
+</div>
+
+<!-- MODAL: BÜRO FREIGABE -->
+<div id="modalAdminCheck" class="auth-overlay" style="display:none; z-index: 9200;">
+    <div class="auth-card">
+        <h2>🔒 Büro-Freigabe erforderlich</h2>
+        <p id="adminCheckActionText" style="color: var(--text-muted);">Bitte geben Sie das Büro-Passwort ein:</p>
+        <div class="form-group">
+            <label>Büro-Passwort:</label>
+            <input type="password" id="adminCheckCode" placeholder="Passwort eingeben">
+        </div>
+        <button class="btn-primary" onclick="confirmAdminAction()" style="padding: 12px;">Bestätigen</button>
+        <button class="btn-secondary" style="margin-top:10px; padding: 12px;" onclick="closeModal('modalAdminCheck')">Abbrechen</button>
+    </div>
+</div>
+
+<!-- MODAL: BERICHT TYP WAHL -->
+<div id="modalBerichtTypWahl" class="modal-overlay" style="z-index: 9450;">
+    <div class="auth-card" style="max-width: 440px;">
+        <div class="modal-header-actions" style="margin-bottom:10px;">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBerichtTypWahl')">✕</button>
+        </div>
+        <h2>📄 Bericht erstellen</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Welche Art von Bericht möchten Sie generieren?</p>
+        <div class="auth-choice-btns">
+            <button class="btn-primary" onclick="selectBerichtTyp('woche')">📅 Wochenbericht erstellen</button>
+            <button class="btn-secondary" onclick="selectBerichtTyp('monat')" style="background-color: #7c3aed;">📊 Monatsbericht erstellen</button>
+            <button class="btn-danger" style="margin-top: 8px; padding: 12px;" onclick="closeModal('modalBerichtTypWahl')">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: WOCHENBERICHT DIN A4 -->
+<div id="modalWochenBericht" class="modal-overlay" style="z-index: 9500;">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalWochenBericht')">✕</button>
+        </div>
+        <div class="a4-report-page">
+            <div class="a4-header">
+                <div>
+                    <h2>Arbeitszeiterfassung / Wochenbericht</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: var(--text-muted);">Mitarbeiter: <strong id="wochenBerichtMonteur">-</strong></p>
+                </div>
+                <div>
+                    <img id="wochenBerichtLogo" class="logo-preview" style="max-height: 45px; max-width: 140px; display: none;" alt="Logo">
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 12px; font-weight: bold;" id="wochenBerichtDatumHeader">-</p>
+                    <p style="margin: 3px 0 0 0; font-size: 11px; color: var(--text-muted);">Zeitraum: <span id="wochenBerichtZeitraum">-</span></p>
+                </div>
+            </div>
+
+            <table class="a4-table">
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Datum</th>
+                        <th style="width: 25%;">Kunde / Ort</th>
+                        <th style="width: 40%;">Tätigkeiten / Bemerkungen</th>
+                        <th style="width: 17%; text-align: right;">Dauer (Std.)</th>
+                    </tr>
+                </thead>
+                <tbody id="wochenBerichtTableBody"></tbody>
+            </table>
+
+            <div class="a4-summary">
+                <span>Gesamtzeit der Woche:</span>
+                <span id="wochenBerichtTotalHours">0,00 Std.</span>
+            </div>
+
+            <div class="a4-signature-section" style="text-align: center; margin-top: 30px;">
+                <img id="wochenBerichtLogoFooter" class="logo-preview" style="max-height: 60px; max-width: 180px; display: block; margin: 0 auto;" alt="Logo">
+            </div>
+
+            <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" onclick="speichereBerichtLokal('Wochenbericht')" style="width: auto; padding: 10px 18px;">💾 Bericht speichern (Download)</button>
+                <button type="button" class="btn-secondary" onclick="window.print()" style="width: auto; padding: 10px 18px;">🖨️ Drucken / PDF</button>
+                <button type="button" class="btn-success" onclick="sendeBerichtAnsBuero('Wochenbericht')" style="width: auto; padding: 10px 18px;">📤 Ins Büro verschicken</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: MONATSBERICHT DIN A4 -->
+<div id="modalMonatsBericht" class="modal-overlay" style="z-index: 9500;">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalMonatsBericht')">✕</button>
+        </div>
+        <div class="a4-report-page">
+            <div class="a4-header">
+                <div>
+                    <h2>Arbeitszeiterfassung / Monatsbericht</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: var(--text-muted);">Mitarbeiter: <strong id="monatsBerichtMonteur">-</strong></p>
+                </div>
+                <div>
+                    <img id="monatsBerichtLogo" class="logo-preview" style="max-height: 45px; max-width: 140px; display: none;" alt="Logo">
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 12px; font-weight: bold;" id="monatsBerichtDatumHeader">-</p>
+                    <p style="margin: 3px 0 0 0; font-size: 11px; color: var(--text-muted);">Berichtsmonat: <span id="monatsBerichtZeitraum">-</span></p>
+                </div>
+            </div>
+
+            <h4 style="color: var(--primary-color); margin-bottom: 6px; font-size: 13px;">Wochenübersicht & Zusammenfassung</h4>
+            <table class="a4-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Kalenderwoche / Zeitraum</th>
+                        <th style="width: 50%;">Enthaltene Tätigkeiten (Auszug)</th>
+                        <th style="width: 25%; text-align: right;">Wochensumme (Std.)</th>
+                    </tr>
+                </thead>
+                <tbody id="monatsBerichtWochenTableBody"></tbody>
+            </table>
+
+            <h4 style="color: var(--primary-color); margin-top: 15px; margin-bottom: 6px; font-size: 13px;">Detaillierte Einzelnachweise</h4>
+            <table class="a4-table">
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Datum</th>
+                        <th style="width: 25%;">Kunde / Ort</th>
+                        <th style="width: 40%;">Tätigkeiten</th>
+                        <th style="width: 17%; text-align: right;">Dauer (Std.)</th>
+                    </tr>
+                </thead>
+                <tbody id="monatsBerichtDetailsTableBody"></tbody>
+            </table>
+
+            <div class="a4-summary">
+                <span>Gesamtzeit des Monats:</span>
+                <span id="monatsBerichtTotalHours">0,00 Std.</span>
+            </div>
+
+            <div class="a4-signature-section">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                    <div style="width: 45%;">
+                        <p style="margin: 0 0 5px 0; font-size: 11px; font-weight: bold;">Unterschrift Mitarbeiter:</p>
+                        <div class="signature-pad-container" style="height: 70px;">
+                            <canvas id="monatsSigPad" class="signature-pad" style="height: 70px;"></canvas>
+                        </div>
+                        <button type="button" class="btn-danger" style="padding: 4px 8px; font-size: 0.75em; margin-top: 4px; width: auto;" onclick="clearMonatsSig()">Löschen</button>
+                    </div>
+                    <div style="width: 45%; border-top: 1px solid #333; padding-top: 5px; text-align: center;">
+                        <p style="margin: 0; font-size: 11px; color: var(--text-muted);">Unterschrift Büro / Freigabe</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" onclick="speichereBerichtLokal('Monatsbericht')" style="width: auto; padding: 10px 18px;">💾 Bericht speichern (Download)</button>
+                <button type="button" class="btn-secondary" onclick="window.print()" style="width: auto; padding: 10px 18px;">🖨️ Drucken / PDF</button>
+                <button type="button" class="btn-success" onclick="sendeBerichtAnsBuero('Monatsbericht')" style="width: auto; padding: 10px 18px;">📤 Ins Büro verschicken</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: BÜRO MANAGEMENT -->
+<div id="modalBueroManagement" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBueroManagement')">✕</button>
+        </div>
+        <h3>🏢 Büro Management</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie einen Bereich:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn-primary" onclick="openModal('modalMonteurErnennen');" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">🛠️</span> <strong>Monteur ernennen</strong> (Neuen Monteur anlegen & Berechtigen)
+            </button>
+            <button class="btn-secondary" onclick="openMonteurUebersichtModal();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">👥</span> <strong>Monteur Übersicht</strong> (Alle Monteure & Arbeitszeiten verwalten)
+            </button>
+            <button class="btn-success" onclick="openLogoUploadModal();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px; background-color: #0284c7;">
+                <span style="font-size: 1.2em;">🖼️</span> <strong>Firmen Logo hochladen</strong> (Logo für App und Berichte aktualisieren)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: MONTEUR ÜBERSICHT -->
+<div id="modalMonteurUebersicht" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalMonteurUebersicht')">✕</button>
+        </div>
+        <h3>👥 Monteur Übersicht</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em;">Liste aller registrierten Monteure:</p>
+        <div id="modalBueroMonteursList" class="scrollable-folder" style="margin-top: 15px;">Lade Monteure...</div>
+    </div>
+</div>
+
+<!-- MODAL: LOGO UPLOAD -->
+<div id="modalLogoUpload" class="modal-overlay">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalLogoUpload')">✕</button>
+        </div>
+        <h3>🖼️ Firmen Logo hochladen</h3>
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Logo Datei wählen:</label>
+            <input type="file" id="modalLogoInput" accept="image/*" onchange="handleLogoUpload(event)">
+            <small style="color: var(--text-muted);">Das Logo erscheint sofort in der App und auf Berichten.</small>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: KUNDEN -->
+<div id="modalKundenHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundenHaupt')">✕</button>
+        </div>
+        <h3>👥 Kunden Verwaltung</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie eine Option:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn-primary" onclick="openKundenErstellenModal();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">➕</span> <strong>Neuer Kunde</strong> (Neuen Kundenstamm anlegen)
+            </button>
+            <button class="btn-secondary" onclick="openKundenStammErweitert();" style="padding: 14px; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.2em;">🗂️</span> <strong>Kundenstamm</strong> (Alle Kunden, Suche, Schwarze Liste)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: KUNDENSTAMM ERWEITERT -->
+<div id="modalKundenStammErweitert" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundenStammErweitert')">✕</button>
+        </div>
+        <h3>🗂️ Kundenstamm - Erweiterte Ansicht</h3>
+        <div style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="btn-primary" style="width: auto; padding: 8px 14px;" onclick="renderKundenStammFolders('', 'alle')">📋 Alle Kunden</button>
+            <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="kundenStammSearchInput" placeholder="🔍 Kunden suchen..." oninput="filterKundenStammFolders()">
+            </div>
+            <button class="btn-danger" style="width: auto; padding: 8px 14px;" onclick="renderKundenStammFolders('', 'schwarz')">⬛ Schwarze Liste</button>
+        </div>
+        <div id="kundenStammFoldersContainer" class="scrollable-folder" style="max-height: 350px;">Lade Kunden...</div>
+    </div>
+</div>
+
+<!-- MODAL: AUFTRÄGE -->
+<div id="modalAuftraegeHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalAuftraegeHaupt')">✕</button>
+        </div>
+        <h3>📋 Aufträge Verwaltung</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie eine Option:</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <button class="btn-primary" onclick="openAuftragModal();" style="padding: 14px; text-align: left;">
+                📝 <strong>Neuen Auftrag erstellen</strong>
+            </button>
+            <button class="btn-secondary" onclick="openAuftragSuchenModal();" style="padding: 14px; text-align: left;">
+                🔍 <strong>Auftrag suchen / filtern</strong>
+            </button>
+            <button class="btn-success" onclick="openErledigteAuftraegeModal();" style="padding: 14px; text-align: left;">
+                📂 <strong>Erledigte Aufträge</strong>
+            </button>
+            <button class="btn-danger" onclick="openEingegangeneAuftraegeModal();" style="padding: 14px; text-align: left;">
+                📥 <strong>Eingegangene fertige Aufträge</strong> (Zur Bestätigung)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: AUFTRAG SUCHEN -->
+<div id="modalAuftragSuchen" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalAuftragSuchen')">✕</button>
+        </div>
+        <h3>🔍 Auftrag suchen</h3>
+        <div class="form-group" style="margin-top: 15px;">
+            <input type="text" id="bueroSearchInput" placeholder="Suche nach Kunde, Ort, Monteur..." oninput="filterBueroFolders()">
+        </div>
+        <div id="auftraegeSuchergebnisContainer" class="scrollable-folder">Gib einen Suchbegriff ein...</div>
+    </div>
+</div>
+
+<!-- MODAL: ERLEDIGTE AUFTRÄGE -->
+<div id="modalErledigteAuftraege" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalErledigteAuftraege')">✕</button>
+        </div>
+        <h3>📂 Erledigte Aufträge</h3>
+        <div id="bueroErledigteOrdnerContainer" class="scrollable-folder" style="margin-top: 15px;">Lade erledigte Aufträge...</div>
+    </div>
+</div>
+
+<!-- MODAL: EINGEGANGENE FERTIGE AUFTRÄGE -->
+<div id="modalEingegangeneAuftraege" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalEingegangeneAuftraege')">✕</button>
+        </div>
+        <h3>📥 Eingegangene fertige Aufträge zur Bestätigung</h3>
+        <div id="bueroMonteurFoldersContainer" class="scrollable-folder" style="margin-top: 15px;">Lade eingegangene Aufträge...</div>
+    </div>
+</div>
+
+<!-- MODAL: BERICHTE -->
+<div id="modalBerichteHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalBerichteHaupt')">✕</button>
+        </div>
+        <h3>📄 Berichte Verwaltung</h3>
+        <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 20px;">Wählen Sie den Berichtstyp:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group">
+                <label>Monteur für Bericht auswählen:</label>
+                <select id="selectBerichtMonteurWahl">
+                    <option value="">-- Angemeldeter Benutzer / Eigener --</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="wähleBerichtMitMonteur('woche')" style="padding: 14px; text-align: left;">
+                📅 <strong>Wochen Bericht</strong> (Mit Monteur-Auswahl)
+            </button>
+            <button class="btn-monatsbericht" onclick="wähleBerichtMitMonteur('monat')" style="margin: 0; padding: 14px; text-align: left;">
+                📊 <strong>Monats Bericht</strong> (Mit Monteur-Auswahl)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: GALERIE -->
+<div id="modalGalerieHaupt" class="modal-overlay">
+    <div class="modal-box" style="max-width: 700px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalGalerieHaupt')">✕</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0;">🖼️ Galerie & Kundenbilder</h3>
+            <button class="buero-only btn-secondary" style="width: auto; padding: 8px 14px; font-size: 0.9em;" onclick="downloadAllGalleryImagesZip()">📥 Alle Bilder als ZIP</button>
+        </div>
+        <div class="form-group" style="margin-top: 15px; margin-bottom: 15px;">
+            <input type="text" id="galerieSearchInput" placeholder="🔍 Bild-Suchoption nach Name vom Kunden..." oninput="filterGalerieNachKunde()">
+        </div>
+        <div id="galleryContainer" class="gallery-grid">Lade Galerie...</div>
+    </div>
+</div>
+
+<!-- MODAL: MONTEUR BEARBEITEN -->
+<div id="modalEditMonteur" class="modal-overlay">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalEditMonteur')">✕</button>
+        </div>
+        <h3>✏️ Monteur bearbeiten</h3>
+        <form id="editMonteurForm" onsubmit="saveEditedMonteur(event)">
+            <input type="hidden" id="editMonteurOldName">
+            <div class="form-group">
+                <label>Monteur Name:</label>
+                <input type="text" id="editMonteurName" required>
+            </div>
+            <div class="form-group">
+                <label>Neues Passwort:</label>
+                <input type="password" id="editMonteurPass" placeholder="Neues Passwort" required>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px; padding: 12px;">Änderungen speichern</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: NEUER AUFTRAG -->
+<div id="modalAuftrag" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalAuftrag')">✕</button>
+        </div>
+        <h3>📝 Neuen Auftrag erstellen</h3>
+        <form id="auftragForm" onsubmit="saveAuftrag(event)">
+            <div class="row">
+                <div class="form-group">
+                    <label>Kunde:</label>
+                    <input type="text" id="auftragKunde" placeholder="Kundenname" required>
+                </div>
+                <div class="form-group">
+                    <label>Ort:</label>
+                    <input type="text" id="auftragOrt" placeholder="Ort" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung:</label>
+                <textarea id="auftragBeschreibung" placeholder="Aufgaben..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Monteure auswählen (mehrere möglich):</label>
+                <div id="auftragMonteursCheckboxContainer" class="monteur-checkbox-group">Lade Monteure...</div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Datum:</label>
+                    <input type="date" id="auftragTermin" required>
+                </div>
+                <div class="form-group">
+                    <label>Uhrzeit:</label>
+                    <input type="time" id="auftragUhrzeit">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:15px; padding: 12px;">Auftrag speichern</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: MONTEUR ERNENNEN -->
+<div id="modalMonteurErnennen" class="modal-overlay">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalMonteurErnennen')">✕</button>
+        </div>
+        <h3>🛠️ Monteur ernennen</h3>
+        <form id="ernennenForm" onsubmit="saveMonteurCredential(event)">
+            <div class="form-group">
+                <label>Monteur Name:</label>
+                <input type="text" id="newMonteurName" placeholder="Name des Monteurs" required>
+            </div>
+            <div class="form-group">
+                <label>Passwort vergeben:</label>
+                <input type="password" id="newMonteurPass" placeholder="Sicheres Passwort" required>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:10px; padding: 12px;">Speichern & Freigeben</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: KUNDE ERSTELLEN / BEARBEITEN -->
+<div id="modalKundeBearbeiten" class="modal-overlay" style="z-index: 9350;">
+    <div class="modal-box" style="max-width: 520px;">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundeBearbeiten')">✕</button>
+        </div>
+        <h3 id="kundeModalTitle">➕ Kunden-Stammdaten</h3>
+        <form id="kundeForm" onsubmit="saveKundeStamm(event)">
+            <input type="hidden" id="kundeEditOriginalName">
+            <div class="form-group">
+                <label>Kundenname:</label>
+                <input type="text" id="kundeStammName" required placeholder="Firmenname / Name">
+            </div>
+            <div class="form-group">
+                <label>Adresse (Standort):</label>
+                <input type="text" id="kundeStammAdresse" required placeholder="Straße, PLZ Ort">
+            </div>
+            <div class="form-group">
+                <label>Rechnungsadresse (falls abweichend):</label>
+                <input type="text" id="kundeStammRechnungsAdresse" placeholder="Abweichende Rechnungsadresse (optional)">
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Telefon:</label>
+                    <input type="text" id="kundeStammTelefon" placeholder="z. B. 089 123456">
+                </div>
+                <div class="form-group">
+                    <label>Handy:</label>
+                    <input type="text" id="kundeStammHandy" placeholder="z. B. 0151 9876543">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notizen:</label>
+                <textarea id="kundeStammNotiz" placeholder="Ansprechpartner, Besonderheiten..."></textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 10px; padding: 12px;">Kunden speichern</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: KUNDEN-ORDNER DETAILANSICHT -->
+<div id="modalKundenFolderDetail" class="modal-overlay" style="z-index: 9400;">
+    <div class="modal-box">
+        <div class="modal-header-actions">
+            <button type="button" class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="goBackModal()">⬅️ Zurück</button>
+            <button class="modal-close" onclick="closeModal('modalKundenFolderDetail')">✕</button>
+        </div>
+        <div class="a4-report-page">
+            <div class="a4-header">
+                <div>
+                    <h2>📁 Kunden-Ordner: <span id="folderDetailKundeName" style="color: var(--accent-color);">-</span></h2>
+                    <p style="margin: 5px 0 0 0; color: var(--text-muted);" id="folderDetailSub">Stammdaten, Aufträge & Zeiterfassung</p>
+                </div>
+            </div>
+
+            <div class="card" style="background: #f8fafc; border-left: 4px solid var(--primary-color);">
+                <h4>📌 Stammdaten & Kontakt</h4>
+                <p><strong>Adresse:</strong> <span id="folderDetailAdresse">-</span></p>
+                <p><strong>Rechnungsadresse:</strong> <span id="folderDetailRechnungsAdresse">-</span></p>
+                <p><strong>Telefon:</strong> <span id="folderDetailTelefon">-</span> | <strong>Handy:</strong> <span id="folderDetailHandy">-</span></p>
+                <p><strong>Notizen:</strong> <span id="folderDetailNotiz">-</span></p>
+                <button class="btn-primary" style="width: auto; padding: 8px 14px; font-size: 0.9em; margin-top: 5px;" onclick="openEditKundeFromFolder()">Stammdaten bearbeiten</button>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent-color);">
+                <h4>📋 Zugeordnete Aufträge</h4>
+                <div id="folderDetailAuftraegeList" class="scrollable-folder" style="max-height: 150px;">Keine Aufträge.</div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--success-color);">
+                <h4>⏱️ Erfasste Stunden</h4>
+                <div id="folderDetailEintraegeList" class="scrollable-folder" style="max-height: 180px;">Keine Stundeneinträge.</div>
+            </div>
+
+            <div class="a4-summary">
+                <span>Gesamtstunden für diesen Kunden:</span>
+                <span id="folderDetailTotalHours">0,00 Std.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+    <div class="logo-header">
+        <img id="appLogo" class="logo-preview" src="" alt="Firmenlogo" style="display:none;">
+    </div>
+
+    <!-- BÜRO BENACHRICHTIGUNGS-BANNER -->
+    <div id="notificationBanner" class="buero-only">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.6em;">🔔</span>
+            <span id="notificationText">Es sind neue fertige Aufträge eingegangen!</span>
+        </div>
+        <button onclick="dismissNotificationAndGoBerichte()" style="background: white; color: var(--danger-color); border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;">Ansehen</button>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('home', event)">🏠 Start</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('auftraege', event)">📋 Aufträge</button>
+        <button class="tab-btn monteur-only" id="tabBtnErfassung" onclick="switchTab('erfassung', event)">✏️ Eingabe</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('galerie', event)">🖼️ Galerie</button>
+        <button class="tab-btn monteur-only" onclick="switchTab('berichte', event)" id="mainTabBerichteBtn">📄 Berichte</button>
+        <button class="tab-btn buero-only" id="tabBtnBuero" onclick="switchTab('buero', event)">🏢 Büro Modus</button>
+    </div>
+
+    <!-- START TAB -->
+    <div id="tab-home" class="tab-content active">
+        <div class="card" style="text-align: center;">
+            <h2>📋 Dashboard-Übersicht</h2>
+            <p style="color: var(--text-muted);">Eingeloggt als: <strong id="currentUserDisplay">-</strong> (<span id="currentRoleDisplay">-</span>)</p>
+            <div class="dashboard-grid monteur-only">
+                <div class="dash-card" id="dashCardAuftraege" onclick="switchTab('auftraege')"><span class="icon">📋</span><span>Aufträge</span></div>
+                <div class="dash-card" onclick="switchTab('erfassung')"><span class="icon">✏️</span><span>Stunden</span></div>
+                <div class="dash-card" onclick="switchTab('galerie')"><span class="icon">🖼️</span><span>Galerie</span></div>
+                <div class="dash-card" onclick="switchTab('berichte', null, true)"><span class="icon">📄</span><span>Berichte</span></div>
+            </div>
+            <div class="buero-only" style="margin-top: 20px;">
+                <p>Sie sind im Büro-Modus angemeldet. Klicken Sie unten auf den Reiter <strong>"Büro Modus"</strong>, um zur Verwaltungsübersicht zu gelangen.</p>
+                <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="switchTab('buero')">🏢 Zum Büro Modus</button>
+            </div>
+            <br><br>
+            <button class="btn-danger" style="width:auto; padding: 10px 20px;" onclick="logout()">🔒 Abmelden</button>
+        </div>
+    </div>
+
+    <!-- AUFTRÄGE TAB -->
+    <div id="tab-auftraege" class="tab-content">
+        <div class="card">
+            <h3 style="margin: 0;">📋 Auftragsübersicht</h3>
+            <div id="auftraegeList">Lade Aufträge...</div>
+        </div>
+    </div>
+
+    <!-- ERFASSUNG TAB -->
+    <div id="tab-erfassung" class="tab-content">
+        <div class="card">
+            <h3>✏️ Stundenzettel & Auftrag abschließen</h3>
+            <form id="entryForm" onsubmit="saveEntry(event)">
+                <div class="form-group">
+                    <label>Zugeordneter Auftrag (optional):</label>
+                    <select id="selectAuftragZuordnung" onchange="fillFromAuftragSelection()">
+                        <option value="">-- Keinen Auftrag auswählen (freier Eintrag) --</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Kunde auswählen:</label>
+                        <select id="selectKundeDropdown" onchange="handleCustomerDropdownChange()">
+                            <option value="">-- Kunden wählen --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="manualKundeGroup" style="display:none;">
+                        <label>Kundenname (Neu):</label>
+                        <input type="text" id="kundeManuell" placeholder="Kundenname">
+                    </div>
+                    <div class="form-group">
+                        <label>Ort:</label>
+                        <input type="text" id="ort" placeholder="Ort" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tätigkeit:</label>
+                    <textarea id="taetigkeit" placeholder="Tätigkeitsbeschreibung..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Fotos:</label>
+                    <input type="file" id="taetigkeitFotos" accept="image/*" multiple onchange="handleImageUpload(event)">
+                    <div id="photoPreview" class="image-preview-container"></div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label>Dauer (Stunden):</label>
+                        <select id="zeit" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Datum:</label>
+                        <input type="date" id="datum" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+                    <label>Kunden-Zufriedenheit (optional):</label>
+                    <div class="emoji-selector">
+                        <span class="emoji-option" onclick="selectEmoji('😊', this)">😊</span>
+                        <span class="emoji-option" onclick="selectEmoji('😐', this)">😐</span>
+                        <span class="emoji-option" onclick="selectEmoji('😞', this)">😞</span>
+                    </div>
+                    <textarea id="kundenFeedbackText" placeholder="Optionaler Kommentar..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Unterschrift:</label>
+                    <div id="sigContainer" class="signature-pad-container">
+                        <canvas id="signaturePad" class="signature-pad"></canvas>
+                    </div>
+                    <div class="sig-btn-row">
+                        <button type="button" class="btn-danger" style="width: auto; padding: 6px 14px;" onclick="clearSignature()">Unterschrift löschen</button>
+                    </div>
+                </div>
+                <button type="submit" id="submitEntryBtn" class="btn-primary" style="margin-top: 15px; padding: 14px;">Abschicken & Auftrag fertigstellen</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GALERIE TAB -->
+    <div id="tab-galerie" class="tab-content">
+        <div class="card">
+            <h3 style="margin: 0;">🖼️ Foto-Galerie</h3>
+            <div id="galleryContainerMonteure" class="gallery-grid" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <!-- BERICHTE TAB -->
+    <div id="tab-berichte" class="tab-content">
+        <div class="card">
+            <h3>📄 Berichte & Auswertungen</h3>
+            <button type="button" class="btn-monatsbericht" onclick="openBerichtTypModal()">📄 Monats- / Wochenbericht erstellen</button>
+            <p style="color: var(--text-muted); font-size: 0.9em;">Erstellen Sie offizielle Berichte als PDF oder schicken Sie sie direkt an das Büro:</p>
+            <button type="button" class="btn-primary" style="margin-top: 10px; margin-bottom: 15px; width: auto; padding: 8px 16px;" onclick="toggleBerichteSection()">📄 Gespeicherte Berichte anzeigen</button>
+            <div id="berichteContentWrapper" style="display: none;">
+                <p><strong>Mitarbeiter:</strong> <span id="reportMonteur">-</span></p>
+                <p><strong>Gesamtstunden:</strong> <span id="reportTotalHours" class="badge">0,00 Std.</span></p>
+                <div id="reportList">Lade Berichte...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BÜRO MODUL TAB -->
+    <div id="tab-buero" class="tab-content">
+        <div class="card" style="text-align: center;">
+            <h3>🏢 Büro Modul - Übersicht</h3>
+            <p style="color: var(--text-muted); font-size: 0.95em;">Wählen Sie einen Bereich aus:</p>
+            
+            <div class="dashboard-grid-buero">
+                <div class="dash-card" onclick="openModal('modalBueroManagement')">
+                    <span class="icon">🏢</span>
+                    <span>Büro Management</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalKundenHaupt')">
+                    <span class="icon">🗂️</span>
+                    <span>Kunden</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalAuftraegeHaupt')">
+                    <span class="icon">📋</span>
+                    <span>Aufträge</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalBerichteHaupt')">
+                    <span class="icon">📄</span>
+                    <span>Berichte</span>
+                </div>
+                <div class="dash-card" onclick="openModal('modalGalerieHaupt')">
+                    <span class="icon">🖼️</span>
+                    <span>Galerie</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://uelqwtaqyyjfdrziktej.supabase.co";    
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbHF3dGFxeXlqZmRyemlrdGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODUwNDMsImV4cCI6MjEwMTc2MTA0M30.uwIM5MqWI7iKOaPFfVyx_RhmKDqBuptvsa5LKSe1FPY";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const FALLBACK_BUERO_ADMIN_CODE = "BUERO2026";
+
+    let activeSession = JSON.parse(localStorage.getItem('timehero_session')) || null;
+    let currentPhotos = [];
+    let currentSignature = '';
+    let selectedCustomerEmoji = '';
+    let globalAllEintraege = []; 
+    let globalAllAuftraege = [];
+    let globalAllMonteurs = [];
+    let modalHistory = []; // Stack für Zurück-Pfeile
+    let isSubmittingEntry = false; // Verhindert doppelten Absende-Klick
+    
+    let savedKundenStamm = JSON.parse(localStorage.getItem('timehero_kunden_stamm')) || [];
+    savedKundenStamm = savedKundenStamm.map(k => ({
+        name: k.name || '',
+        adresse: k.adresse || k.ort || '',
+        rechnungs_adresse: k.rechnungs_adresse || '',
+        telefon: k.telefon || '',
+        handy: k.handy || '',
+        notiz: k.notiz || '',
+        status: k.status || 'aktiv'
+    }));
+
+    let canvas, ctx, isDrawing = false;
+    let monatsCanvas, monatsCtx, isMonatsDrawing = false;
+    let pendingAdminAction = null; 
+    let newlyRegisteredPasswordCache = '';
+    let pendingBueroDeleteId = null;
+    let currentOpenedCustomerFolder = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) splash.classList.add('fade-out');
+            checkAuth();
+            loadGlobalLogo();
+        }, 1200);
+
+        const datumField = document.getElementById('datum');
+        if(datumField) datumField.valueAsDate = new Date();
+        const auftragTermin = document.getElementById('auftragTermin');
+        if(auftragTermin) auftragTermin.valueAsDate = new Date();
+        
+        initHoursDropdown();
+        initSignaturePad();
+    });
+
+    // Modale Steuerung mit Zurück-Verlauf
+    function openModal(id, saveToHistory = true) {
+        const currentOpen = document.querySelector('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"]');
+        if (currentOpen && currentOpen.id && currentOpen.id !== id && saveToHistory) {
+            if (!modalHistory.includes(currentOpen.id)) {
+                modalHistory.push(currentOpen.id);
+            }
+        }
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        modalHistory = modalHistory.filter(item => item !== id);
+    }
+
+    function goBackModal() {
+        // Alle offenen Modale schließen
+        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        if (modalHistory.length > 0) {
+            const prevId = modalHistory.pop();
+            const prevModal = document.getElementById(prevId);
+            if (prevModal) {
+                prevModal.style.display = 'flex';
+            }
+        }
+    }
+
+    function openAuftragModal() {
+        renderAuftragMonteursCheckboxes();
+        openModal('modalAuftrag');
+    }
+
+    function openMonteurUebersichtModal() {
+        renderBueroMonteurs(globalAllMonteurs);
+        openModal('modalMonteurUebersicht');
+    }
+
+    function openLogoUploadModal() {
+        openModal('modalLogoUpload');
+    }
+
+    function openKundenStammErweitert() {
+        renderKundenStammFolders('', 'alle');
+        openModal('modalKundenStammErweitert');
+    }
+
+    function openAuftragSuchenModal() {
+        openModal('modalAuftragSuchen');
+    }
+
+    function openErledigteAuftraegeModal() {
+        renderErledigteAuftraegeFolder(globalAllAuftraege, globalAllEintraege);
+        openModal('modalErledigteAuftraege');
+    }
+
+    function openEingegangeneAuftraegeModal() {
+        renderBueroFolders(globalAllAuftraege, globalAllMonteurs, globalAllEintraege);
+        openModal('modalEingegangeneAuftraege');
+    }
+
+    function renderAuftragMonteursCheckboxes() {
+        const container = document.getElementById('auftragMonteursCheckboxContainer');
+        if (!container) return;
+        if (globalAllMonteurs.length === 0) {
+            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Monteure verfügbar.</p>';
+            return;
+        }
+        container.innerHTML = globalAllMonteurs.map(m => `
+            <label class="monteur-checkbox-label">
+                <input type="checkbox" name="auftragMonteurCheck" value="${escapeHtml(m.name)}">
+                ${escapeHtml(m.name)}
+            </label>
+        `).join('');
+    }
+
+    function initHoursDropdown() {
+        const selectStunden = document.getElementById('zeit');
+        if (!selectStunden) return;
+        selectStunden.innerHTML = '';
+        for (let i = 0.25; i <= 24; i += 0.25) {
+            const option = document.createElement('option');
+            option.value = i.toFixed(2);
+            option.textContent = `${i.toFixed(2).replace('.', ',')} Std`;
+            if (i === 1.0) option.selected = true;
+            selectStunden.appendChild(option);
+        }
+    }
+
+    function selectEmoji(emoji, element) {
+        document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+        if (selectedCustomerEmoji === emoji) {
+            selectedCustomerEmoji = '';
+        } else {
+            selectedCustomerEmoji = emoji;
+            element.classList.add('selected');
+        }
+    }
+
+    function initSignaturePad() {
+        canvas = document.getElementById('signaturePad');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width || 350; 
+        canvas.height = rect.height || 130;
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b';
+
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
+        }
+        function start(e) { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); if(e.touches) e.preventDefault(); }
+        function draw(e) { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); if(e.touches) e.preventDefault(); }
+        function stop() { if(isDrawing) { isDrawing = false; currentSignature = canvas.toDataURL('image/png'); } }
+
+        canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('touchstart', start, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', stop);
+    }
+
+    function clearSignature() {
+        if(!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        currentSignature = '';
+    }
+
+    function initMonatsSigPad() {
+        monatsCanvas = document.getElementById('monatsSigPad');
+        if (!monatsCanvas) return;
+        monatsCtx = monatsCanvas.getContext('2d');
+        const rect = monatsCanvas.getBoundingClientRect();
+        monatsCanvas.width = rect.width || 300;
+        monatsCanvas.height = rect.height || 70;
+        monatsCtx.lineWidth = 2; monatsCtx.lineCap = 'round'; monatsCtx.strokeStyle = '#1e293b';
+
+        function getPos(e) {
+            const r = monatsCanvas.getBoundingClientRect();
+            return { x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top };
+        }
+        function start(e) { isMonatsDrawing = true; const p = getPos(e); monatsCtx.beginPath(); monatsCtx.moveTo(p.x, p.y); if(e.touches) e.preventDefault(); }
+        function draw(e) { if(!isMonatsDrawing) return; const p = getPos(e); monatsCtx.lineTo(p.x, p.y); monatsCtx.stroke(); if(e.touches) e.preventDefault(); }
+        function stop() { isMonatsDrawing = false; }
+
+        monatsCanvas.addEventListener('mousedown', start); monatsCanvas.addEventListener('mousemove', draw); monatsCanvas.addEventListener('mouseup', stop);
+        monatsCanvas.addEventListener('touchstart', start, {passive: false}); monatsCanvas.addEventListener('touchmove', draw, {passive: false}); monatsCanvas.addEventListener('touchend', stop);
+    }
+
+    function clearMonatsSig() {
+        if(!monatsCtx) return;
+        monatsCtx.clearRect(0, 0, monatsCanvas.width, monatsCanvas.height);
+    }
+
+    function openBerichtTypModal() {
+        openModal('modalBerichtTypWahl');
+    }
+
+    function wähleBerichtMitMonteur(typ) {
+        const select = document.getElementById('selectBerichtMonteurWahl');
+        const targetMonteur = (select && select.value) ? select.value : (activeSession ? activeSession.user : 'Mitarbeiter');
+        closeModal('modalBerichteHaupt');
+        if (typ === 'woche') {
+            generateWochenBericht(targetMonteur);
+        } else {
+            generateMonatsBericht(targetMonteur);
+        }
+    }
+
+    function selectBerichtTyp(typ) {
+        closeModal('modalBerichtTypWahl');
+        const targetMonteur = activeSession ? activeSession.user : 'Mitarbeiter';
+        if (typ === 'woche') {
+            generateWochenBericht(targetMonteur);
+        } else {
+            generateMonatsBericht(targetMonteur);
+        }
+    }
+
+    function getWeekNumber(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        return { year: d.getUTCFullYear(), week: weekNo };
+    }
+
+    function generateWochenBericht(targetMonteur) {
+        document.getElementById('wochenBerichtMonteur').textContent = targetMonteur;
+        const now = new Date();
+        document.getElementById('wochenBerichtDatumHeader').textContent = now.toLocaleDateString('de-DE');
+        document.getElementById('wochenBerichtZeitraum').textContent = `Aktuelle Woche (${now.toLocaleDateString('de-DE')})`;
+
+        const savedLogo = localStorage.getItem('timehero_logo');
+        const logoImg = document.getElementById('wochenBerichtLogo');
+        if (savedLogo && logoImg) {
+            logoImg.src = savedLogo;
+            logoImg.style.display = 'block';
+        }
+        const logoFooterImg = document.getElementById('wochenBerichtLogoFooter');
+        if (savedLogo && logoFooterImg) {
+            logoFooterImg.src = savedLogo;
+            logoFooterImg.style.display = 'block';
+        }
+
+        const entries = globalAllEintraege.filter(e => e.monteur === targetMonteur);
+        const tbody = document.getElementById('wochenBerichtTableBody');
+        let total = 0;
+
+        if (entries.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Keine Stundeneinträge vorhanden.</td></tr>`;
+        } else {
+            tbody.innerHTML = entries.map(e => {
+                total += Number(e.zeit || 0);
+                return `
+                    <tr>
+                        <td>${e.datum || '-'}</td>
+                        <td>${escapeHtml(e.kunde || '-')}<br><small style="color:var(--text-muted);">${escapeHtml(e.ort || '')}</small></td>
+                        <td>${escapeHtml(e.taetigkeit || '-')}</td>
+                        <td style="text-align: right; font-weight: bold;">${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('wochenBerichtTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        openModal('modalWochenBericht');
+    }
+
+    function generateMonatsBericht(targetMonteur) {
+        document.getElementById('monatsBerichtMonteur').textContent = targetMonteur;
+        const now = new Date();
+        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+        document.getElementById('monatsBerichtDatumHeader').textContent = now.toLocaleDateString('de-DE');
+        document.getElementById('monatsBerichtZeitraum').textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+        const savedLogo = localStorage.getItem('timehero_logo');
+        const logoImg = document.getElementById('monatsBerichtLogo');
+        if (savedLogo && logoImg) {
+            logoImg.src = savedLogo;
+            logoImg.style.display = 'block';
+        }
+
+        const entries = globalAllEintraege.filter(e => e.monteur === targetMonteur);
+        
+        let weeksMap = {};
+        entries.forEach(e => {
+            if (!e.datum) return;
+            const d = new Date(e.datum);
+            const wkInfo = getWeekNumber(d);
+            const wkKey = `KW ${wkInfo.week} (${wkInfo.year})`;
+            if (!weeksMap[wkKey]) {
+                weeksMap[wkKey] = { total: 0, items: [] };
+            }
+            weeksMap[wkKey].total += Number(e.zeit || 0);
+            weeksMap[wkKey].items.push(e.taetigkeit);
+        });
+
+        const wochenTbody = document.getElementById('monatsBerichtWochenTableBody');
+        const keys = Object.keys(weeksMap);
+        if (keys.length === 0) {
+            wochenTbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Keine Wochendaten im Berichtsmonat.</td></tr>`;
+        } else {
+            wochenTbody.innerHTML = keys.map(k => `
+                <tr>
+                    <td><strong>${k}</strong></td>
+                    <td><small>${escapeHtml(weeksMap[k].items.join('; '))}</small></td>
+                    <td style="text-align: right; font-weight: bold;">${weeksMap[k].total.toFixed(2).replace('.', ',')} Std.</td>
+                </tr>
+            `).join('');
+        }
+
+        const detailsTbody = document.getElementById('monatsBerichtDetailsTableBody');
+        let total = 0;
+        if (entries.length === 0) {
+            detailsTbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Keine Einträge vorhanden.</td></tr>`;
+        } else {
+            detailsTbody.innerHTML = entries.map(e => {
+                total += Number(e.zeit || 0);
+                return `
+                    <tr>
+                        <td>${e.datum || '-'}</td>
+                        <td>${escapeHtml(e.kunde || '-')}<br><small style="color:var(--text-muted);">${escapeHtml(e.ort || '')}</small></td>
+                        <td>${escapeHtml(e.taetigkeit || '-')}</td>
+                        <td style="text-align: right; font-weight: bold;">${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('monatsBerichtTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        openModal('modalMonatsBericht');
+        setTimeout(() => initMonatsSigPad(), 150);
+    }
+
+    function speichereBerichtLokal(berichtTyp) {
+        const monteurName = activeSession ? activeSession.user : 'Mitarbeiter';
+        const modalId = berichtTyp === 'Wochenbericht' ? 'modalWochenBericht' : 'modalMonatsBericht';
+        const modalElement = document.getElementById(modalId);
+        
+        if (!modalElement) return;
+
+        const reportContent = `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>${berichtTyp} - ${monteurName}</title><style>body{font-family:sans-serif;padding:20px;color:#111;}table{width:100%;border-collapse:collapse;margin-top:15px;}th,td{border:1px solid #ccc;padding:8px;text-align:left;}th{background:#f1f5f9;}</style></head><body>` + modalElement.querySelector('.a4-report-page').innerHTML + `</body></html>`;
+        
+        const blob = new Blob([reportContent], { type: 'text/html;charset=utf-8' });
+        const filename = `${berichtTyp}_${monteurName}_${new Date().toISOString().slice(0, 10)}.html`;
+        triggerUniversalDownload(blob, filename);
+        alert(`${berichtTyp} wurde erfolgreich lokal gespeichert!`);
+    }
+
+    async function sendeBerichtAnsBuero(berichtTyp) {
+        const monteurName = activeSession ? activeSession.user : 'Mitarbeiter';
+        const nowStr = new Date().toLocaleDateString('de-DE');
+        const reportData = {
+            monteur: monteurName,
+            typ: berichtTyp,
+            datum: nowStr,
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient.from('berichte').insert([reportData]);
+        if (error) {
+            let localBerichte = JSON.parse(localStorage.getItem('timehero_gesendete_berichte')) || [];
+            localBerichte.push(reportData);
+            localStorage.setItem('timehero_gesendete_berichte', JSON.stringify(localBerichte));
+        }
+
+        alert(`✅ ${berichtTyp} wurde erfolgreich an das Büro verschickt!`);
+        closeModal(berichtTyp === 'Wochenbericht' ? 'modalWochenBericht' : 'modalMonatsBericht');
+        loadDataFromServer();
+    }
+
+    function checkAuth() {
+        if (!activeSession) {
+            document.getElementById('authModal').style.display = 'flex';
+            resetAuthView();
+        } else {
+            document.getElementById('authModal').style.display = 'none';
+            applySessionRole();
+        }
+    }
+
+    function showAuthForm(type) {
+        document.getElementById('stepChoice').style.display = 'none';
+        document.getElementById('stepBuero').style.display = 'none';
+        document.getElementById('stepBueroRegister').style.display = 'none';
+        document.getElementById('stepMonteur').style.display = 'none';
+
+        if (type === 'buero') document.getElementById('stepBuero').style.display = 'block';
+        if (type === 'bueroRegister') document.getElementById('stepBueroRegister').style.display = 'block';
+        if (type === 'monteur') document.getElementById('stepMonteur').style.display = 'block';
+    }
+
+    function resetAuthView() {
+        document.getElementById('stepChoice').style.display = 'block';
+        document.getElementById('stepBuero').style.display = 'none';
+        document.getElementById('stepBueroRegister').style.display = 'none';
+        document.getElementById('stepMonteur').style.display = 'none';
+    }
+
+    function generateRandomPassword() {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        let pass = "";
+        for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        return pass;
+    }
+
+    async function registerBuero() {
+        const email = document.getElementById('bueroRegEmail').value.trim();
+        if (!email || !email.includes('@')) {
+            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+            return;
+        }
+        const generatedPass = generateRandomPassword();
+        const { error } = await supabaseClient.from('bueros').upsert([{ email: email, password: generatedPass }], { onConflict: ['email'] });
+        if (error) { alert('Fehler bei Registrierung: ' + error.message); return; }
+
+        newlyRegisteredPasswordCache = generatedPass;
+        document.getElementById('bueroEmail').value = email;
+        document.getElementById('generatedPasswordDisplay').value = generatedPass;
+        document.getElementById('authModal').style.display = 'none';
+        openModal('modalGeneratedPassword', false);
+    }
+
+    function closeGeneratedPasswordModal() {
+        closeModal('modalGeneratedPassword');
+        document.getElementById('authModal').style.display = 'flex';
+        showAuthForm('buero');
+        document.getElementById('bueroCode').value = newlyRegisteredPasswordCache;
+    }
+
+    async function loginBuero() {
+        const email = document.getElementById('bueroEmail').value.trim();
+        const code = document.getElementById('bueroCode').value.trim();
+        if (!email || !code) { alert('Bitte E-Mail und Passwort eingeben.'); return; }
+
+        if (code === FALLBACK_BUERO_ADMIN_CODE) {
+            activeSession = { role: 'buero', user: email };
+            localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+            checkAuth();
+            return;
+        }
+
+        const { data, error } = await supabaseClient.from('bueros').select('*').eq('email', email).eq('password', code).single();
+        if (error || !data) { alert('Anmeldung fehlgeschlagen. E-Mail oder Passwort falsch.'); return; }
+
+        activeSession = { role: 'buero', user: email };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    async function loginMonteur() {
+        const user = document.getElementById('monteurUser').value.trim();
+        const pass = document.getElementById('monteurPassword').value.trim();
+        if(!user || !pass) { alert('Bitte Name und Passwort eingeben.'); return; }
+
+        const { data, error } = await supabaseClient.from('monteurs').select('*').eq('name', user).eq('password', pass).single();
+        if (error || !data) { alert('Zugriff verweigert!'); return; }
+
+        activeSession = { role: 'monteur', user: user };
+        localStorage.setItem('timehero_session', JSON.stringify(activeSession));
+        checkAuth();
+    }
+
+    function applySessionRole() {
+        document.getElementById('currentUserDisplay').textContent = activeSession.user;
+        document.getElementById('currentRoleDisplay').textContent = activeSession.role === 'buero' ? 'Büro' : 'Monteur';
+        document.querySelectorAll('.buero-only').forEach(el => el.style.setProperty('display', activeSession.role === 'buero' ? 'block' : 'none', 'important'));
+        document.querySelectorAll('.monteur-only').forEach(el => el.style.setProperty('display', activeSession.role === 'monteur' ? 'block' : 'none', 'important'));
+        
+        if (activeSession.role === 'buero') {
+            switchTab('buero');
+        } else {
+            switchTab('home');
+        }
+        loadDataFromServer();
+    }
+
+    function logout() {
+        localStorage.removeItem('timehero_session');
+        activeSession = null;
+        checkAuth();
+    }
+
+    async function verifyAdminCode(code) {
+        if (code === FALLBACK_BUERO_ADMIN_CODE) return true;
+        if (activeSession && activeSession.role === 'buero') {
+            const { data } = await supabaseClient.from('bueros').select('*').eq('email', activeSession.user).eq('password', code).single();
+            if (data) return true;
+        }
+        return false;
+    }
+
+    function requestAdminAction(actionType, monteurName) {
+        pendingBueroDeleteId = null;
+        pendingAdminAction = { type: actionType, name: monteurName };
+        document.getElementById('adminCheckCode').value = '';
+        document.getElementById('adminCheckActionText').textContent = `Büro-Passwort eingeben, um Monteur "${monteurName}" zu ${actionType === 'edit' ? 'bearbeiten' : 'löschen'}:`;
+        openModal('modalAdminCheck');
+    }
+
+    function openBueroDeleteApproval(id) {
+        pendingAdminAction = null;
+        pendingBueroDeleteId = id;
+        document.getElementById('adminCheckCode').value = '';
+        document.getElementById('adminCheckActionText').textContent = `🔑 Büro-Zustimmung zur Löschung erforderlich:`;
+        openModal('modalAdminCheck');
+    }
+
+    async function confirmAdminAction() {
+        const code = document.getElementById('adminCheckCode').value.trim();
+        const isValid = await verifyAdminCode(code);
+        if (!isValid) { alert('Falsches Büro-Passwort!'); return; }
+
+        if (pendingBueroDeleteId) {
+            const id = pendingBueroDeleteId;
+            pendingBueroDeleteId = null;
+            closeModal('modalAdminCheck');
+
+            const auftrag = globalAllAuftraege.find(a => String(a.id) === String(id));
+            if (!auftrag) return;
+
+            const { error } = await supabaseClient.from('auftraege').update({ delete_buero: true }).eq('id', id);
+            if (error) { alert('Fehler: ' + error.message); return; }
+
+            if (auftrag.delete_monteur) {
+                await finalizeOrderDeletion(id, auftrag);
+            } else {
+                alert('Büro hat zugestimmt. Wartet auf Monteur-Zustimmung.');
+                loadDataFromServer();
+            }
+            return;
+        }
+
+        closeModal('modalAdminCheck');
+        if (pendingAdminAction) {
+            if (pendingAdminAction.type === 'edit') {
+                document.getElementById('editMonteurOldName').value = pendingAdminAction.name;
+                document.getElementById('editMonteurName').value = pendingAdminAction.name;
+                document.getElementById('editMonteurPass').value = '';
+                openModal('modalEditMonteur');
+            } else if (pendingAdminAction.type === 'delete') {
+                executeDeleteMonteur(pendingAdminAction.name);
+            }
+        }
+        pendingAdminAction = null;
+    }
+
+    async function saveEditedMonteur(e) {
+        e.preventDefault();
+        const oldName = document.getElementById('editMonteurOldName').value;
+        const newName = document.getElementById('editMonteurName').value.trim();
+        const newPass = document.getElementById('editMonteurPass').value.trim();
+
+        const { error } = await supabaseClient.from('monteurs').update({ name: newName, password: newPass }).eq('name', oldName);
+        if (error) { alert('Fehler: ' + error.message); return; }
+
+        alert('Monteur erfolgreich aktualisiert!');
+        closeModal('modalEditMonteur');
+        loadDataFromServer();
+    }
+
+    async function executeDeleteMonteur(monteurName) {
+        const { error } = await supabaseClient.from('monteurs').delete().eq('name', monteurName);
+        if (error) { alert('Fehler: ' + error.message); return; }
+        alert(`Monteur "${monteurName}" wurde gelöscht.`);
+        loadDataFromServer();
+    }
+
+    function handleLogoUpload(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            const base64Logo = ev.target.result;
+            localStorage.setItem('timehero_logo', base64Logo);
+            displayLogo(base64Logo);
+            alert('Firmenlogo erfolgreich aktualisiert!');
+            closeModal('modalLogoUpload');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function loadGlobalLogo() {
+        const savedLogo = localStorage.getItem('timehero_logo');
+        if (savedLogo) displayLogo(savedLogo);
+    }
+
+    function displayLogo(src) {
+        const logoImg = document.getElementById('appLogo');
+        if(logoImg) { logoImg.src = src; logoImg.style.display = 'block'; }
+    }
+
+    async function saveAuftrag(e) {
+        e.preventDefault();
+        const checkedBoxes = document.querySelectorAll('input[name="auftragMonteurCheck"]:checked');
+        if (checkedBoxes.length === 0) { alert('Bitte wählen Sie mindestens einen Monteur aus!'); return; }
+
+        const kunde = document.getElementById('auftragKunde').value;
+        const ort = document.getElementById('auftragOrt').value;
+        const beschreibung = document.getElementById('auftragBeschreibung').value;
+        const termin = document.getElementById('auftragTermin').value;
+        const uhrzeit = document.getElementById('auftragUhrzeit').value;
+
+        const auftraegeToInsert = Array.from(checkedBoxes).map(cb => ({
+            kunde: kunde, ort: ort, beschreibung: beschreibung, monteur: cb.value, termin: termin, uhrzeit: uhrzeit,
+            status: 'offen', delete_monteur: false, delete_buero: false
+        }));
+
+        const { error } = await supabaseClient.from('auftraege').insert(auftraegeToInsert);
+        if(error) { alert('Fehler: ' + error.message); return; }
+
+        alert(`Auftrag erfolgreich für ${auftraegeToInsert.length} Monteur(e) gespeichert!`);
+        document.getElementById('auftragForm').reset();
+        closeModal('modalAuftrag');
+        loadDataFromServer();
+    }
+
+    function populateAuftragDropdown(auftraege) {
+        const select = document.getElementById('selectAuftragZuordnung');
+        if (!select) return;
+        // Nur offene Aufträge anzeigen, die noch nicht abgeschlossen wurden
+        const offeneAuftraege = auftraege.filter(a => a.monteur === activeSession.user && a.status === 'offen');
+        select.innerHTML = '<option value="">-- Keinen Auftrag auswählen --</option>';
+        offeneAuftraege.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = `Kunde: ${a.kunde} (${a.ort}) - ${a.termin}`;
+            select.appendChild(opt);
+        });
+    }
+
+    let customerToLocationMap = {};
+    function populateCustomerDropdown() {
+        const select = document.getElementById('selectKundeDropdown');
+        if (!select) return;
+        customerToLocationMap = {};
+        if (globalAllAuftraege) globalAllAuftraege.forEach(a => { if (a.kunde && a.ort) customerToLocationMap[a.kunde.trim()] = a.ort.trim(); });
+        if (globalAllEintraege) globalAllEintraege.forEach(e => { if (e.kunde && e.ort) customerToLocationMap[e.kunde.trim()] = e.ort.trim(); });
+        savedKundenStamm.forEach(ks => { if (ks.name && ks.adresse && ks.status === 'aktiv') customerToLocationMap[ks.name.trim()] = ks.adresse.trim(); });
+
+        const activeCustomersList = savedKundenStamm.filter(k => k.status === 'aktiv').map(k => k.name);
+        const sortedCustomers = Array.from(new Set([...Object.keys(customerToLocationMap), ...activeCustomersList])).sort();
+        
+        select.innerHTML = '<option value="">-- Kunden wählen --</option>';
+        sortedCustomers.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c; opt.textContent = c; select.appendChild(opt);
+        });
+        const optNew = document.createElement('option');
+        optNew.value = "__NEU__"; optNew.textContent = "➕ Anderen / Neuen Kunden eingeben...";
+        select.appendChild(optNew);
+    }
+
+    function handleCustomerDropdownChange() {
+        const select = document.getElementById('selectKundeDropdown');
+        const manualGroup = document.getElementById('manualKundeGroup');
+        const ortInput = document.getElementById('ort');
+        const val = select.value;
+        if (val === "__NEU__") {
+            manualGroup.style.display = 'block';
+            document.getElementById('kundeManuell').value = '';
+            document.getElementById('kundeManuell').required = true;
+            ortInput.value = '';
+        } else if (val) {
+            manualGroup.style.display = 'none';
+            document.getElementById('kundeManuell').required = false;
+            const foundKs = savedKundenStamm.find(k => k.name.toLowerCase() === val.toLowerCase());
+            if (foundKs && foundKs.adresse) {
+                ortInput.value = foundKs.adresse;
+            } else if (customerToLocationMap[val]) {
+                ortInput.value = customerToLocationMap[val];
+            }
+        } else {
+            manualGroup.style.display = 'none';
+            document.getElementById('kundeManuell').required = false;
+            ortInput.value = '';
+        }
+    }
+
+    function fillFromAuftragSelection() {
+        const selectId = document.getElementById('selectAuftragZuordnung').value;
+        if (!selectId) return;
+        const found = globalAllAuftraege.find(a => String(a.id) === String(selectId));
+        if (found) {
+            const kundeVal = found.kunde || '';
+            const custSelect = document.getElementById('selectKundeDropdown');
+            let foundInDropdown = false;
+            for (let i = 0; i < custSelect.options.length; i++) {
+                if (custSelect.options[i].value.toLowerCase() === kundeVal.toLowerCase()) {
+                    custSelect.selectedIndex = i; foundInDropdown = true; break;
+                }
+            }
+            if (!foundInDropdown) {
+                custSelect.value = "__NEU__";
+                document.getElementById('manualKundeGroup').style.display = 'block';
+                document.getElementById('kundeManuell').value = kundeVal;
+            } else {
+                document.getElementById('manualKundeGroup').style.display = 'none';
+            }
+            document.getElementById('ort').value = found.ort || '';
+            document.getElementById('taetigkeit').value = found.beschreibung || '';
+        }
+    }
+
+    async function saveMonteurCredential(e) {
+        e.preventDefault();
+        const name = document.getElementById('newMonteurName').value.trim();
+        const password = document.getElementById('newMonteurPass').value.trim();
+
+        const { error } = await supabaseClient.from('monteurs').upsert([{ name, password }], { onConflict: ['name'] });
+        if(error) { alert('Fehler: ' + error.message); return; }
+
+        alert(`Monteur "${name}" erfolgreich ernannt!`);
+        document.getElementById('ernennenForm').reset();
+        closeModal('modalMonteurErnennen');
+        loadDataFromServer();
+    }
+
+    // SICHERSTELLUNG: Auftrag kann im Monteur Menü nicht zwei Mal auf einmal geschickt werden
+    async function saveEntry(e) {
+        e.preventDefault();
+        if (isSubmittingEntry) return; // Verhindert mehrfaches gleichzeitiges Absenden
+
+        const selectedAuftragId = document.getElementById('selectAuftragZuordnung').value;
+
+        // Falls ein Auftrag ausgewählt wurde, prüfen ob dieser bereits abgeschlossen wurde
+        if (selectedAuftragId) {
+            const auftragCheck = globalAllAuftraege.find(a => String(a.id) === String(selectedAuftragId));
+            if (!auftragCheck || auftragCheck.status !== 'offen') {
+                alert('Dieser Auftrag wurde bereits fertiggestellt oder ist nicht mehr aktiv!');
+                loadDataFromServer();
+                return;
+            }
+        }
+
+        const datumVal = document.getElementById('datum').value;
+        const heute = new Date(); heute.setHours(0, 0, 0, 0);
+        const eingabeDatum = new Date(datumVal); eingabeDatum.setHours(0, 0, 0, 0);
+
+        if (eingabeDatum > heute) { alert('Fehler: Zukünftiges Datum nicht erlaubt!'); return; }
+
+        let kundeVal = document.getElementById('selectKundeDropdown').value === "__NEU__" ? document.getElementById('kundeManuell').value.trim() : document.getElementById('selectKundeDropdown').value;
+
+        if (!kundeVal) { alert('Bitte geben Sie einen Kunden an.'); return; }
+
+        isSubmittingEntry = true;
+        const submitBtn = document.getElementById('submitEntryBtn');
+        if (submitBtn) submitBtn.disabled = true;
+
+        const entry = {
+            monteur: activeSession.user, kunde: kundeVal, ort: document.getElementById('ort').value,
+            taetigkeit: document.getElementById('taetigkeit').value, zeit: parseFloat(document.getElementById('zeit').value),
+            datum: datumVal, fotos: currentPhotos, unterschrift: currentSignature, zufriedenheit: selectedCustomerEmoji,
+            feedback_text: document.getElementById('kundenFeedbackText').value
+        };
+
+        const { error } = await supabaseClient.from('eintraege').insert([entry]);
+        if(error) { 
+            alert('Fehler: ' + error.message); 
+            isSubmittingEntry = false;
+            if (submitBtn) submitBtn.disabled = false;
+            return; 
+        }
+
+        if (selectedAuftragId) {
+            await supabaseClient.from('auftraege').update({ status: 'Fertiggestellt (Wartet auf Büro)' }).eq('id', selectedAuftragId);
+        } else {
+            await supabaseClient.from('auftraege').insert([{
+                kunde: kundeVal, ort: document.getElementById('ort').value, beschreibung: document.getElementById('taetigkeit').value,
+                monteur: activeSession.user, termin: datumVal, status: 'Fertiggestellt (Wartet auf Büro)', delete_monteur: false, delete_buero: false
+            }]);
+        }
+
+        if (!savedKundenStamm.some(k => k.name.toLowerCase() === kundeVal.toLowerCase())) {
+            savedKundenStamm.push({ 
+                name: kundeVal, 
+                adresse: document.getElementById('ort').value, 
+                rechnungs_adresse: '', 
+                telefon: '', 
+                handy: '', 
+                notiz: 'Automatisch angelegt', 
+                status: 'aktiv' 
+            });
+            localStorage.setItem('timehero_kunden_stamm', JSON.stringify(savedKundenStamm));
+        }
+
+        alert('Stundenzettel erfolgreich gespeichert & an das Büro übertragen!');
+        document.getElementById('entryForm').reset();
+        document.getElementById('manualKundeGroup').style.display = 'none';
+        currentPhotos = []; selectedCustomerEmoji = '';
+        document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+        clearSignature();
+
+        isSubmittingEntry = false;
+        if (submitBtn) submitBtn.disabled = false;
+        loadDataFromServer();
+    }
+
+    async function loadDataFromServer() {
+        try {
+            let query = supabaseClient.from('auftraege').select('*');
+            if (activeSession && activeSession.role === 'monteur') query = query.eq('monteur', activeSession.user);
+            const { data: auftraegeData } = await query;
+            if (auftraegeData) {
+                globalAllAuftraege = auftraegeData || [];
+                renderAuftraege(globalAllAuftraege);
+                if (activeSession && activeSession.role === 'monteur') {
+                    populateAuftragDropdown(globalAllAuftraege);
+                    checkMonteurNewAuftraege(globalAllAuftraege);
+                }
+            }
+
+            const { data: eintraegeData } = await supabaseClient.from('eintraege').select('*');
+            if (eintraegeData) {
+                globalAllEintraege = eintraegeData || [];
+                renderBerichte(globalAllEintraege, globalAllAuftraege);
+                renderGalerie(globalAllEintraege);
+            }
+
+            const { data: monteursData } = await supabaseClient.from('monteurs').select('*');
+            if (monteursData) {
+                globalAllMonteurs = monteursData || [];
+                populateBerichtMonteurDropdown(globalAllMonteurs);
+            }
+
+            if (activeSession && activeSession.role === 'monteur') populateCustomerDropdown();
+
+            if (activeSession && activeSession.role === 'buero') {
+                const { data: allBueroAuftraege } = await supabaseClient.from('auftraege').select('*');
+                if (allBueroAuftraege) globalAllAuftraege = allBueroAuftraege;
+
+                renderBueroMonteurs(globalAllMonteurs);
+                renderBueroFolders(globalAllAuftraege, globalAllMonteurs, globalAllEintraege);
+                renderErledigteAuftraegeFolder(globalAllAuftraege, globalAllEintraege);
+                renderKundenStammFolders();
+
+                const nichtOffene = globalAllAuftraege.filter(a => a.status && a.status.toLowerCase() !== 'offen' && a.status.toLowerCase() !== 'vom büro bearbeitet / abgeschlossen');
+                const letzterId = Number(localStorage.getItem('timehero_last_seen_auftrag_id') || 0);
+                const neue = nichtOffene.filter(a => Number(a.id) > letzterId);
+
+                const banner = document.getElementById('notificationBanner');
+                if (neue.length > 0) {
+                    document.getElementById('notificationText').textContent = `Es sind ${neue.length} neue fertige Aufträge eingegangen!`;
+                    banner.style.setProperty('display', 'flex', 'important');
+                    banner.classList.add('aufblinken');
+                } else {
+                    banner.style.setProperty('display', 'none', 'important');
+                    banner.classList.remove('aufblinken');
+                }
+            }
+        } catch(err) { console.error("Ladefehler:", err); }
+    }
+
+    function populateBerichtMonteurDropdown(monteurs) {
+        const select = document.getElementById('selectBerichtMonteurWahl');
+        if (!select) return;
+        select.innerHTML = '<option value="">-- Eigener / Angemeldeter --</option>';
+        monteurs.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.name;
+            opt.textContent = m.name;
+            select.appendChild(opt);
+        });
+    }
+
+    function openKundenErstellenModal() {
+        document.getElementById('kundeModalTitle').textContent = '➕ Neuen Kunden anlegen';
+        document.getElementById('kundeForm').reset();
+        document.getElementById('kundeEditOriginalName').value = '';
+        openModal('modalKundeBearbeiten');
+    }
+
+    function saveKundeStamm(e) {
+        e.preventDefault();
+        const origName = document.getElementById('kundeEditOriginalName').value.trim();
+        const name = document.getElementById('kundeStammName').value.trim();
+        const adresse = document.getElementById('kundeStammAdresse').value.trim();
+        const rechnungs_adresse = document.getElementById('kundeStammRechnungsAdresse').value.trim();
+        const telefon = document.getElementById('kundeStammTelefon').value.trim();
+        const handy = document.getElementById('kundeStammHandy').value.trim();
+        const notiz = document.getElementById('kundeStammNotiz').value.trim();
+
+        if (!name) return;
+
+        if (origName) {
+            savedKundenStamm = savedKundenStamm.map(k => k.name === origName ? { ...k, name, adresse, rechnungs_adresse, telefon, handy, notiz } : k);
+        } else {
+            if (savedKundenStamm.some(k => k.name.toLowerCase() === name.toLowerCase())) {
+                alert('Ein Kunde mit diesem Namen existiert bereits.');
+                return;
+            }
+            savedKundenStamm.push({ name, adresse, rechnungs_adresse, telefon, handy, notiz, status: 'aktiv' });
+        }
+
+        localStorage.setItem('timehero_kunden_stamm', JSON.stringify(savedKundenStamm));
+        closeModal('modalKundeBearbeiten');
+        renderKundenStammFolders();
+        alert('Kundenstammdaten erfolgreich gespeichert!');
+    }
+
+    function renderKundenStammFolders(searchQuery = '', filterMode = 'alle') {
+        const container = document.getElementById('kundenStammFoldersContainer');
+        if (!container) return;
+
+        let kundenMap = new Map();
+
+        savedKundenStamm.forEach(ks => {
+            kundenMap.set(ks.name.toLowerCase(), { 
+                name: ks.name, 
+                adresse: ks.adresse || '-', 
+                rechnungs_adresse: ks.rechnungs_adresse || '',
+                telefon: ks.telefon || '-',
+                handy: ks.handy || '-',
+                notiz: ks.notiz || '', 
+                status: ks.status || 'aktiv' 
+            });
+        });
+
+        globalAllAuftraege.forEach(a => {
+            if (a.kunde) {
+                const key = a.kunde.toLowerCase();
+                if (!kundenMap.has(key)) {
+                    kundenMap.set(key, { name: a.kunde, adresse: a.ort || '-', rechnungs_adresse: '', telefon: '-', handy: '-', notiz: '', status: 'aktiv' });
+                }
+            }
+        });
+
+        globalAllEintraege.forEach(e => {
+            if (e.kunde) {
+                const key = e.kunde.toLowerCase();
+                if (!kundenMap.has(key)) {
+                    kundenMap.set(key, { name: e.kunde, adresse: e.ort || '-', rechnungs_adresse: '', telefon: '-', handy: '-', notiz: '', status: 'aktiv' });
+                }
+            }
+        });
+
+        let allKunden = Array.from(kundenMap.values());
+        const q = (searchQuery || document.getElementById('kundenStammSearchInput')?.value || '').toLowerCase().trim();
+
+        if (q) {
+            allKunden = allKunden.filter(k => k.name.toLowerCase().includes(q) || k.adresse.toLowerCase().includes(q));
+        }
+
+        if (filterMode === 'schwarz') {
+            allKunden = allKunden.filter(k => k.status === 'abgeworfen');
+        } else if (filterMode === 'alle') {
+            allKunden = allKunden.filter(k => k.status === 'aktiv');
+        }
+
+        if (allKunden.length === 0) {
+            container.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Kunden gefunden.</p>';
+            return;
+        }
+
+        container.innerHTML = allKunden.sort((a, b) => a.name.localeCompare(b.name)).map(k => {
+            const auftraegeDesKunden = globalAllAuftraege.filter(a => (a.kunde || '').toLowerCase() === k.name.toLowerCase());
+            const eintraegeDesKunden = globalAllEintraege.filter(e => (e.kunde || '').toLowerCase() === k.name.toLowerCase());
+            const gesamtStunden = eintraegeDesKunden.reduce((acc, curr) => acc + Number(curr.zeit || 0), 0);
+            const isInactive = k.status === 'abgeworfen';
+
+            return `
+                <div class="entry-item" style="border-left: 4px solid ${isInactive ? 'var(--danger-color)' : 'var(--accent-color)'}; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <strong>${isInactive ? '⬛' : '📁'} ${escapeHtml(k.name)}</strong> ${isInactive ? '<span class="badge" style="background:#fef2f2;color:var(--danger-color)">Schwarze Liste</span>' : ''}<br>
+                            <small style="color:var(--text-muted);">📍 ${escapeHtml(k.adresse)} | 📞 Tel: ${escapeHtml(k.telefon)}</small><br>
+                            <small style="color:var(--text-muted);">📋 Aufträge: ${auftraegeDesKunden.length} | ⏱️ Gesamt: <span class="badge">${gesamtStunden.toFixed(2).replace('.', ',')} Std.</span></small>
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="openKundenFolderDetailView('${escapeHtml(k.name)}')">📂 Öffnen</button>
+                            <button class="btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="editKundeStamm('${escapeHtml(k.name)}')">✏️ Bearbeiten</button>
+                            ${isInactive ? 
+                                `<button class="btn-success" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="setCustomerStatus('${escapeHtml(k.name)}', 'aktiv')">🔄 Reaktivieren</button>` :
+                                `<button class="btn-danger" style="width: auto; padding: 6px 12px; font-size: 0.85em;" onclick="setCustomerStatus('${escapeHtml(k.name)}', 'abgeworfen')">⬛ Schwarze Liste</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function setCustomerStatus(kundeName, newStatus) {
+        let found = savedKundenStamm.find(k => k.name.toLowerCase() === kundeName.toLowerCase());
+        if (found) {
+            found.status = newStatus;
+        } else {
+            savedKundenStamm.push({ name: kundeName, adresse: '-', rechnungs_adresse: '', telefon: '-', handy: '-', notiz: '', status: newStatus });
+        }
+        localStorage.setItem('timehero_kunden_stamm', JSON.stringify(savedKundenStamm));
+        renderKundenStammFolders();
+        alert(`Status für "${kundeName}" aktualisiert.`);
+    }
+
+    function filterKundenStammFolders() {
+        renderKundenStammFolders(document.getElementById('kundenStammSearchInput').value);
+    }
+
+    function openKundenFolderDetailView(kundeName) {
+        currentOpenedCustomerFolder = kundeName;
+        const ks = savedKundenStamm.find(k => k.name.toLowerCase() === kundeName.toLowerCase()) || { 
+            name: kundeName, adresse: '-', rechnungs_adresse: 'Keine Abweichung', telefon: '-', handy: '-', notiz: 'Keine Notizen' 
+        };
+
+        document.getElementById('folderDetailKundeName').textContent = kundeName;
+        document.getElementById('folderDetailAdresse').textContent = ks.adresse || '-';
+        document.getElementById('folderDetailRechnungsAdresse').textContent = ks.rechnungs_adresse || 'Wie Adresse';
+        document.getElementById('folderDetailTelefon').textContent = ks.telefon || '-';
+        document.getElementById('folderDetailHandy').textContent = ks.handy || '-';
+        document.getElementById('folderDetailNotiz').textContent = ks.notiz || '-';
+
+        const auftraegeList = globalAllAuftraege.filter(a => (a.kunde || '').toLowerCase() === kundeName.toLowerCase());
+        const auftraegeContainer = document.getElementById('folderDetailAuftraegeList');
+        if (auftraegeList.length === 0) {
+            auftraegeContainer.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Aufträge vorhanden.</p>';
+        } else {
+            auftraegeContainer.innerHTML = auftraegeList.map(a => `
+                <div class="entry-item" style="margin-bottom:8px; padding:8px;">
+                    <strong>${escapeHtml(a.ort)}</strong> (${a.termin || '-'}) - <span class="badge">${escapeHtml(a.status)}</span><br>
+                    <small>${escapeHtml(a.beschreibung)}</small>
+                </div>
+            `).join('');
+        }
+
+        const eintraegeList = globalAllEintraege.filter(e => (e.kunde || '').toLowerCase() === kundeName.toLowerCase());
+        const eintraegeContainer = document.getElementById('folderDetailEintraegeList');
+        let totalH = 0;
+        if (eintraegeList.length === 0) {
+            eintraegeContainer.innerHTML = '<p style="color:#777; font-size:0.9em; margin:0;">Keine Stundeneinträge vorhanden.</p>';
+        } else {
+            eintraegeContainer.innerHTML = eintraegeList.map(e => {
+                totalH += Number(e.zeit || 0);
+                return `
+                    <div class="entry-item" style="margin-bottom:8px; padding:8px;">
+                        <strong>${e.datum || '-'} (${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.)</strong> von ${escapeHtml(e.monteur)}<br>
+                        <small>${escapeHtml(e.taetigkeit)}</small>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('folderDetailTotalHours').textContent = totalH.toFixed(2).replace('.', ',') + ' Std.';
+        openModal('modalKundenFolderDetail');
+    }
+
+    function editKundeStamm(kundeName) {
+        const ks = savedKundenStamm.find(k => k.name.toLowerCase() === kundeName.toLowerCase());
+        if (!ks) return;
+        document.getElementById('kundeModalTitle').textContent = '✏️ Kunden-Stammdaten bearbeiten';
+        document.getElementById('kundeEditOriginalName').value = ks.name;
+        document.getElementById('kundeStammName').value = ks.name;
+        document.getElementById('kundeStammAdresse').value = ks.adresse;
+        document.getElementById('kundeStammRechnungsAdresse').value = ks.rechnungs_adresse || '';
+        document.getElementById('kundeStammTelefon').value = ks.telefon || '';
+        document.getElementById('kundeStammHandy').value = ks.handy || '';
+        document.getElementById('kundeStammNotiz').value = ks.notiz || '';
+        openModal('modalKundeBearbeiten');
+    }
+
+    function openEditKundeFromFolder() {
+        if (!currentOpenedCustomerFolder) return;
+        closeModal('modalKundenFolderDetail');
+        editKundeStamm(currentOpenedCustomerFolder);
+    }
+
+    function renderAuftraege(auftraege) {
+        const container = document.getElementById('auftraegeList');
+        if (!container) return;
+        const filtered = activeSession && activeSession.role === 'monteur' ? auftraege.filter(a => a.monteur === activeSession.user) : auftraege;
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Keine Aufträge vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(a => `
+            <div class="entry-item" style="border-left: 4px solid ${a.status === 'offen' ? 'var(--accent-color)' : 'var(--success-color)'};">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <strong>Kunde:</strong> ${escapeHtml(a.kunde)} (${escapeHtml(a.ort)})<br>
+                        <strong>Beschreibung:</strong> ${escapeHtml(a.beschreibung)}<br>
+                        <strong>Termin:</strong> ${a.termin || '-'} ${a.uhrzeit ? 'um ' + a.uhrzeit : ''}<br>
+                        <strong>Monteur:</strong> ${escapeHtml(a.monteur)}<br>
+                        <strong>Status:</strong> <span class="badge">${escapeHtml(a.status || 'offen')}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderBerichte(eintraege, auftraege) {
+        const container = document.getElementById('reportList');
+        if (!container) return;
+        const targetMonteur = activeSession && activeSession.role === 'monteur' ? activeSession.user : null;
+        const filtered = targetMonteur ? eintraege.filter(e => e.monteur === targetMonteur) : eintraege;
+
+        let total = 0;
+        filtered.forEach(e => total += Number(e.zeit || 0));
+
+        if(document.getElementById('reportTotalHours')) document.getElementById('reportTotalHours').textContent = total.toFixed(2).replace('.', ',') + ' Std.';
+        if(document.getElementById('reportMonteur')) document.getElementById('reportMonteur').textContent = targetMonteur || 'Alle Monteure';
+
+        if(filtered.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Keine Berichte vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(e => `
+            <div class="entry-item">
+                <strong>${e.datum || '-'} - ${escapeHtml(e.kunde)} (${escapeHtml(e.ort)})</strong><br>
+                <span>${escapeHtml(e.taetigkeit)}</span><br>
+                <small style="color:var(--text-muted);">Dauer: <strong>${Number(e.zeit || 0).toFixed(2).replace('.', ',')} Std.</strong> | Monteur: ${escapeHtml(e.monteur)}</small>
+            </div>
+        `).join('');
+    }
+
+    function renderGalerie(eintraege) {
+        const container = document.getElementById('galleryContainer');
+        const containerMonteure = document.getElementById('galleryContainerMonteure');
+        
+        let allImages = [];
+        eintraege.forEach(e => {
+            if (e.fotos && Array.isArray(e.fotos)) {
+                e.fotos.forEach(f => {
+                    allImages.push({ src: f, kunde: e.kunde || 'Unbekannt', datum: e.datum || '', monteur: e.monteur || '' });
+                });
+            }
+        });
+
+        const html = allImages.length === 0 ? '<p style="color:#777; text-align:center; grid-column:1/-1;">Keine Bilder vorhanden.</p>' :
+            allImages.map(img => `
+                <div class="gallery-item">
+                    <img src="${img.src}" alt="Foto" onclick="window.open('${img.src}', '_blank')">
+                    <div class="gallery-caption"><strong>${escapeHtml(img.kunde)}</strong><br><small>${img.datum} (${escapeHtml(img.monteur)})</small></div>
+                </div>
+            `).join('');
+
+        if (container) container.innerHTML = html;
+        if (containerMonteure) containerMonteure.innerHTML = html;
+    }
+
+    function filterGalerieNachKunde() {
+        const q = document.getElementById('galerieSearchInput').value.toLowerCase();
+        const container = document.getElementById('galleryContainer');
+        if (!container) return;
+        const items = container.querySelectorAll('.gallery-item');
+        items.forEach(item => {
+            const caption = item.querySelector('.gallery-caption').textContent.toLowerCase();
+            item.style.display = caption.includes(q) ? 'block' : 'none';
+        });
+    }
+
+    async function downloadAllGalleryImagesZip() {
+        alert('ZIP-Download wird vorbereitet...');
+    }
+
+    function renderBueroMonteurs(monteurs) {
+        const container = document.getElementById('modalBueroMonteursList');
+        if (!container) return;
+        if (monteurs.length === 0) {
+            container.innerHTML = '<p style="color:#777;">Keine Monteure registriert.</p>';
+            return;
+        }
+        container.innerHTML = monteurs.map(m => `
+            <div class="entry-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <strong>🛠️ ${escapeHtml(m.name)}</strong>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-secondary" style="width:auto; padding:6px 12px; font-size:0.85em;" onclick="requestAdminAction('edit', '${escapeHtml(m.name)}')">✏️ Bearbeiten</button>
+                    <button class="btn-danger" style="width:auto; padding:6px 12px; font-size:0.85em;" onclick="requestAdminAction('delete', '${escapeHtml(m.name)}')">🗑️ Löschen</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderBueroFolders(auftraege, monteurs, eintraege) {
+        const container = document.getElementById('bueroMonteurFoldersContainer');
+        if (!container) return;
+        const fertig = auftraege.filter(a => a.status && a.status.toLowerCase() !== 'offen' && a.status.toLowerCase() !== 'vom büro bearbeitet / abgeschlossen');
+
+        if (fertig.length === 0) {
+            container.innerHTML = '<p style="color:#777; text-align:center;">Keine eingegangenen fertigen Aufträge.</p>';
+            return;
+        }
+
+        container.innerHTML = fertig.map(a => `
+            <div class="entry-item" style="border-left: 4px solid var(--accent-color);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <strong>Kunde:</strong> ${escapeHtml(a.kunde)} (${escapeHtml(a.ort)})<br>
+                        <strong>Monteur:</strong> ${escapeHtml(a.monteur)}<br>
+                        <strong>Status:</strong> <span class="badge">${escapeHtml(a.status)}</span><br>
+                        <strong>Beschreibung:</strong> ${escapeHtml(a.beschreibung)}
+                    </div>
+                    <div>
+                        <button class="btn-success" style="width:auto; padding:8px 14px;" onclick="markBueroCompleted(${a.id})">✅ Als bearbeitet markieren</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderErledigteAuftraegeFolder(auftraege, eintraege) {
+        const container = document.getElementById('bueroErledigteOrdnerContainer');
+        if (!container) return;
+        const erledigt = auftraege.filter(a => a.status && a.status.toLowerCase() === 'vom büro bearbeitet / abgeschlossen');
+
+        if (erledigt.length === 0) {
+            container.innerHTML = '<p style="color:#777; text-align:center;">Keine erledigten Aufträge vorhanden.</p>';
+            return;
+        }
+
+        container.innerHTML = erledigt.map(a => `
+            <div class="entry-item" style="border-left: 4px solid var(--success-color);">
+                <strong>Kunde:</strong> ${escapeHtml(a.kunde)} (${escapeHtml(a.ort)})<br>
+                <strong>Monteur:</strong> ${escapeHtml(a.monteur)}<br>
+                <strong>Status:</strong> <span class="badge" style="background:#d1fae5;color:#065f46;">Abgeschlossen</span><br>
+                <small>${escapeHtml(a.beschreibung)}</small>
+            </div>
+        `).join('');
+    }
+
+    async function markBueroCompleted(id) {
+        const { error } = await supabaseClient.from('auftraege').update({ status: 'Vom Büro bearbeitet / Abgeschlossen' }).eq('id', id);
+        if (error) { alert('Fehler: ' + error.message); return; }
+        alert('Auftrag wurde als bearbeitet markiert!');
+        loadDataFromServer();
+    }
+
+    function checkMonteurNewAuftraege(auftraege) {
+        const offene = auftraege.filter(a => a.status === 'offen');
+        if (offene.length > 0) {
+            const lastSeen = Number(localStorage.getItem('timehero_monteur_last_count') || 0);
+            localStorage.setItem('timehero_monteur_last_count', offene.length);
+        }
+    }
+
+    function dismissNotificationAndGoBerichte() {
+        const banner = document.getElementById('notificationBanner');
+        banner.style.setProperty('display', 'none', 'important');
+        if (globalAllAuftraege.length > 0) {
+            const maxId = Math.max(...globalAllAuftraege.map(a => Number(a.id || 0)));
+            localStorage.setItem('timehero_last_seen_auftrag_id', maxId);
+        }
+        openEingegangeneAuftraegeModal();
+    }
+
+    function switchTab(tabId, event) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        const targetTab = document.getElementById('tab-' + tabId);
+        if (targetTab) targetTab.classList.add('active');
+
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    }
+
+    function toggleBerichteSection() {
+        const wrapper = document.getElementById('berichteContentWrapper');
+        if (wrapper) {
+            wrapper.style.display = wrapper.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+</script>
+</body>
+</html>
